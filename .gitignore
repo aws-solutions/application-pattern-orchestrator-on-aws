@@ -1,0 +1,11 @@
+node_modules
+cdk.out
+/node_modules
+*.d.ts
+**/.vscode/
+**/coverage-reports/*
+**/test_report.xml
+.aws-sam/
+dist
+**/build
+.DS_Store

@@ -1,0 +1,16 @@
+{
+    "depcheck": {
+        "ignoreMatches": [
+            "@typescript-eslint/eslint-plugin",
+            "@types/jest",
+            "@typescript-eslint/parser",
+            "eslint-config-prettier",
+            "eslint-config-typescript",
+            "eslint-plugin-header",
+            "eslint-plugin-prettier",
+            "prettier",
+            "webpack-cli",
+            "encoding"
+        ]
+    }
+}

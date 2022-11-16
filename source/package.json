@@ -1,0 +1,58 @@
+{
+    "name": "rapm-solution",
+    "version": "1.0.0",
+    "description": "Reusable Application Patterns Manager Solution",
+    "author": {
+        "name": "Amazon Web Services",
+        "url": "https://aws.amazon.com/solutions"
+    },
+    "license": "Apache-2.0",
+    "scripts": {
+        "cleanup": "tsc --build ./ --clean && rm -rf node_modules && rm -f package-lock.json",
+        "cleanup:tsc": "tsc --build ./ --clean",
+        "zip-blueprint-infrastructure": "cd blueprint-infrastructure && node ../dist/lib/infra-utils/zip-bundle.js && cd ..",
+        "build": "tsc && npm run zip-blueprint-infrastructure",
+        "watch": "tsc -w",
+        "test": "jest --coverage",
+        "lint": "eslint --ext .ts . --fix",
+        "cdk": "cdk",
+        "synth": "cdk context --clear && cdk synth -q",
+        "build-lambda": "cd lambda/blueprintgovernanceservice && npm run all && cd ../..",
+        "build-blueprint-infrastructure": "cd blueprint-infrastructure && npm ci && npm run build && npm run lint && npm test && cd ..",
+        "all": "npm ci && cd blueprint-ui && yarn all && cd .. && npm run build-lambda && npm run build-blueprint-infrastructure && npm run lint && npm run build",
+        "deploy": "npm run synth && cdk deploy --all",
+        "release:patch": "standard-version --release-as patch",
+        "release:minor": "standard-version --release-as minor",
+        "release": "standard-version"
+    },
+    "devDependencies": {
+        "@types/archiver": "^5.3.1",
+        "@types/jest": "^29.1.0",
+        "@typescript-eslint/eslint-plugin": "^5.31.0",
+        "@typescript-eslint/parser": "^5.31.0",
+        "archiver": "^5.3.0",
+        "aws-cdk": "^2.46.0",
+        "esbuild": "^0.14.51",
+        "eslint": "^8.20.0",
+        "eslint-config-prettier": "^8.5.0",
+        "eslint-config-typescript": "^3.0.0",
+        "eslint-plugin-header": "^3.1.1",
+        "eslint-plugin-prettier": "^4.2.1",
+        "jest": "^29.1.1",
+        "prettier": "^2.7.1",
+        "standard-version": "^9.3.1",
+        "ts-jest": "^29.0.3",
+        "typescript": "^4.7.4"
+    },
+    "dependencies": {
+        "@aws-cdk/aws-servicecatalogappregistry-alpha": "^2.47.0-alpha.0",
+        "@aws-cdk/aws-synthetics-alpha": "^2.44.0-alpha.0",
+        "@types/node": "^18.7.23",
+        "aws-cdk-lib": "^2.46.0",
+        "aws-sdk": "^2.1182.0",
+        "cdk-nag": "^2.15.51",
+        "constructs": "^10.1.84",
+        "source-map-support": "^0.5.16",
+        "winston": "^3.8.1"
+    }
+}
