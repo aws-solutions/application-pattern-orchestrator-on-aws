@@ -1,0 +1,12 @@
+node_modules
+lerna-debug.log
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+cdk.context.json
+
+# Ignore typescript artifacts
+*.js
+!jest.config.js
+*.d.ts

@@ -1,0 +1,11 @@
+{
+    "app": "npx ts-node --prefer-ts-exts bin/blueprint-service-infra.ts",
+    "context": {
+        "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": true,
+        "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": false,
+        "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
+        "@aws-cdk/core:stackRelativeExports": false,
+        "@aws-cdk/aws-lambda:recognizeVersionProps": true,
+        "appRegistrySyncScheduleExpression": "cron(0 3 * * ? *)"
+    }
+}
