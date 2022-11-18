@@ -50,13 +50,14 @@ This solution is intended for deployment in an enterprise by IT infrastructure a
 ### Benefits
 
 1. **Drive consistency and standardization of controls across your organizations**
-Shift governance to the left by enabling the use of patterns, incorporating guardrails, for new applications, at scale. Automatically validate pattern security, architecture, and compliance, against organization specific policy-as-code. Embed attributes into patterns which are automatically inherited by new applications using the underlying patterns. Apply controls and governance consistently based on patter attributes.
+   Shift governance to the left by enabling the use of patterns, incorporating guardrails, for new applications, at scale. Automatically validate pattern security, architecture, and compliance, against organization specific policy-as-code. Embed attributes into patterns which are automatically inherited by new applications using the underlying patterns. Apply controls and governance consistently based on patter attributes.
 1. **Self-service, low touch collaboration supported by automation**
-Facilitate the contribution of application patterns from your distributed engineering teams in a decentralized manner. Automatic validation accelerates basic compliance checks, while developers continue to use familiar tools, such as Git, to review and iterate on feedback in an asynchronous manner. Reduce reliance on your central teams and increase overall productivity.
+   Facilitate the contribution of application patterns from your distributed engineering teams in a decentralized manner. Automatic validation accelerates basic compliance checks, while developers continue to use familiar tools, such as Git, to review and iterate on feedback in an asynchronous manner. Reduce reliance on your central teams and increase overall productivity.
 1. **Centralized discovery of approved application patterns**
-Allow your engineering teams to quickly browse and search for patterns via a centrally accessible, unified portal. Navigate a standalone user interface built for application developers, with ease. Automatically notify users of new patterns, and updates.
+   Allow your engineering teams to quickly browse and search for patterns via a centrally accessible, unified portal. Navigate a standalone user interface built for application developers, with ease. Automatically notify users of new patterns, and updates.
 1. **Integrated with AWS Service Catalog and Code Artifact**
-Orchestrates the end-to-end publishing of approved patterns to customizable destination repositories, with out-of-the-box support for AWS Service Catalog for CloudFormation (Cfn) based patterns, and AWS CodeArtifact for Cloud Development Kit (CDK) based patterns.
+   Orchestrates the end-to-end publishing of approved patterns to customizable destination repositories, with out-of-the-box support for AWS Service Catalog for CloudFormation (Cfn) based patterns, and AWS CodeArtifact for Cloud Development Kit (CDK) based patterns.
+
 ---
 
 ## Architecture overview
@@ -84,7 +85,7 @@ The solution deploys the following components that work together to provide patt
 ### AWS account
 
 - A CDK bootstrapped AWS account: You must bootstrap your AWS CDK environment in the target region you want to deploy, using the AWS CDK toolkit's cdk bootstrap command. From the command line, authenticate into your AWS account, and run `cdk bootstrap aws://<YOUR ACCOUNT NUMBER>/<REGION>`. For more information, refer to the [AWS CDK's How to bootstrap](https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html) page.
--	Amazon SES should have production access: The solution utilises Amazon SES for sending email notifications to application pattern’s subscribers. In order to use this feature, please make sure Amazon SES in your account is not in sandbox environment. For more details, please refer to [Moving out of the Amazon SES sandbox page](https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html).
+- Amazon SES should have production access: The solution utilises Amazon SES for sending email notifications to application pattern’s subscribers. In order to use this feature, please make sure Amazon SES in your account is not in sandbox environment. For more details, please refer to [Moving out of the Amazon SES sandbox page](https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html).
 - The AWS account should be part of an AWS Organization: This prerequisite is only applicable for application patterns that are of the CloudFormation type, and needs to be shared across accounts using AWS Service Catalog, as currently, the AWS Service Catalog AppRegistry attribute groups can only be [shared to AWS accounts within an organization](https://docs.aws.amazon.com/ram/latest/userguide/shareable.html#shareable-sc-appregistry). This prerequisite does not apply to CDK based application patterns.
 
 ### Tools
@@ -116,7 +117,7 @@ A complete list of prerequisites related to GitHub/GitHub Enterprise are listed:
 - **GitHub personal access token**:
   - Create a [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token) from a GitHub account that is a member of the organization. This token is required by the solution to create pattern’s code repository in the organization and also to initialize it with an initial commit.
   - Token permissions should have repo scope.
-  - Store the GitHub personal access token as a secret in plain text form in AWS Secrets Manager with the name `githubTokenSecretId`. It must NOT be encrypted using AWS KMS Customer Managed Key and should only be encrypted using the AWS managed key for Secrets Manager (`aws/secretsmanager`). User has the flexibility to provide a different name for the secret in AWS Secrets Manager, however, that would require setting `githubTokenSecretId` property in source/cdk.json. Please refer to the [Configuration section](#configuration) for details. Example AWS CLI command to create the secret: 
+  - Store the GitHub personal access token as a secret in plain text form in AWS Secrets Manager with the name `githubTokenSecretId`. It must NOT be encrypted using AWS KMS Customer Managed Key and should only be encrypted using the AWS managed key for Secrets Manager (`aws/secretsmanager`). User has the flexibility to provide a different name for the secret in AWS Secrets Manager, however, that would require setting `githubTokenSecretId` property in source/cdk.json. Please refer to the [Configuration section](#configuration) for details. Example AWS CLI command to create the secret:
     - ```
       aws secretsmanager create-secret --name githubTokenSecretId --description "GitHub personal access token" --secret-string "<GIHUB_TOKEN>"
       ```
@@ -292,12 +293,18 @@ You can unisntall the solution by deleting the stacks from the AWS CloudFormatio
 
 This solution collects anonymous operational metrics to help AWS improve the quality and features of the solution. For more information, including how to disable this capability, please see the implementation guide.
 
----
-
-Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
 ## Documentation
 
 - [API Reference](./source/lambda/blueprintgovernanceservice/API.md)
 - Implementation Guide
 - Landing page
+
+---
+
+Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
+Licensed under the Apache License Version 2.0 (the "License"). You may not use this file except in compliance with the License. A copy of the License is located at
+
+    http://www.apache.org/licenses/
+
+or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions and limitations under the License.
