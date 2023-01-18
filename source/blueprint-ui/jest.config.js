@@ -15,11 +15,12 @@
 */
 
 const path = require('path');
-
 module.exports = {
     testTimeout: 20000,
     transform: {
-        '^.+\\.tsx?$': 'ts-jest',
+        // to workaround ts-jest memory leak issue logged in https://github.com/kulshekhar/ts-jest/issues/1967
+        // apply this fix: https://github.com/trivikr/aws-sdk-js-v3/commit/615a271dadfbe6d7deca1678abebbf4a6c29125c
+        '^.+\\.tsx?$': ['ts-jest', { isolatedModules: true, }],
     },
     transformIgnorePatterns: ['node_modules/(?!d3)/'],
     moduleNameMapper: {
@@ -38,6 +39,7 @@ module.exports = {
         '.*/node_modules/',
         '.*/build/',
         '.*/dist/',
+        'jest/resolver.ts',
         'src/amplify-config.ts',
         'src/setupTests.ts',
         'src/reportWebVitals.ts',
@@ -51,14 +53,9 @@ module.exports = {
         'src/components/queries/Mutation.tsx',
     ],
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-    // to workaround ts-jest memory leak issue logged in https://github.com/kulshekhar/ts-jest/issues/1967
-    // apply this fix: https://github.com/trivikr/aws-sdk-js-v3/commit/615a271dadfbe6d7deca1678abebbf4a6c29125c
-    globals: {
-        'ts-jest': {
-            isolatedModules: true,
-        },
-    },
+
     testEnvironment: 'jsdom',
+    resolver: path.join(__dirname, 'jest', 'resolver.ts'),
     coverageThreshold: {
         global: {
             branches: 80,
