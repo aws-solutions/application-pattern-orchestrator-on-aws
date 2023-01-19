@@ -26,7 +26,7 @@
 
 ## Application Pattern Orchestrator on AWS
 
-Application Pattern Orchestrator (APO) is an AWS Solution that helps customers establish and manage an internal catalog of reusable, repeatable, well-architected, secure-by-design, and production-ready cloud infrastructure patterns for use by application development and engineering teams throughout their organizations.
+Application Pattern Orchestrator (APO) is an AWS Solution that helps customers to establish and manage an internal catalog of reusable, repeatable, well-architected, secure-by-design, and production-ready cloud infrastructure patterns for use by application development and engineering teams throughout their organizations.
 
 ## Licence
 
@@ -274,7 +274,7 @@ Upon successfully cloning the repository into your local development environment
 
 After the solution stack has been deployed and launched, you can sign in to the web interface.
 
-1. Find the website URL from your deployment output starting with `ApoStack.RapmFrontendCloudFrontURL` and open it in your browser. We recommend using Chrome. You will be redirected to the sign in page that requires username and password.
+1. Find the website URL from deployment output starting with `ApoStack.RapmFrontendCloudFrontURL` and open it in your browser. We recommend using Chrome. You will be redirected to the sign in page that requires username and password.
 2. Sign in with the email address specified during deployment (`adminEmail`) and use the temporary password received via email after deployment. You will receive a temporary password from `no-reply@verificationemail.com`.
 3. During the sign in, you are required to set a new password when signing in for the first time.
 4. After signing in, you can view the solution's web UI.
