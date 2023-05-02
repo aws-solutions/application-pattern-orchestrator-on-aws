@@ -18,8 +18,9 @@ import { App, Aspects } from 'aws-cdk-lib';
 import 'source-map-support/register';
 import {
     BlueprintInfrastructureStack,
-    BlueprintType,
+    BlueprintInfrastructureStackProps,
 } from '../lib/blueprint-infrastructure-stack';
+import { BlueprintType } from '../lib/blueprint-infrastructure-types';
 import {
     CfnNagCustomResourceSuppressionAspect,
     CfnNagServiceRoleDefaultPolicyResourceSuppressionAspect,
@@ -34,34 +35,37 @@ const blueprintInfrastructureSharedConfigJson = app.node.tryGetContext(
     'blueprintInfrastructureSharedConfigJson'
 );
 
+const repositoryName = app.node.tryGetContext('repositoryName');
+const repositoryMainBranchName = app.node.tryGetContext('repositoryMainBranchName');
 const githubRepositoryOwner = app.node.tryGetContext('githubRepositoryOwner');
-const githubRepositoryName = app.node.tryGetContext('githubRepositoryName');
-const githubRepositoryMainBranchName = app.node.tryGetContext(
-    'githubRepositoryMainBranchName'
-);
 const githubConnectionArn = app.node.tryGetContext('githubConnectionArn');
 
+const blueprintInfraStackProps: BlueprintInfrastructureStackProps = {
+    env: {
+        region: process.env.CDK_DEFAULT_REGION,
+        account: process.env.CDK_DEFAULT_ACCOUNT,
+    },
+    blueprintId,
+    blueprintType,
+    blueprintInfrastructureSharedConfigJson,
+    repositoryName,
+    repositoryMainBranchName,
+    tags: {
+        // The blueprint ID tag is used to update the corresponding blueprint infrastructure status in dynamodb
+        blueprintId,
+        blueprintType,
+    },
+};
+if (githubConnectionArn && githubRepositoryOwner) {
+    blueprintInfraStackProps.githubConfig = {
+        githubConnectionArn,
+        githubOrganization: githubRepositoryOwner,
+    };
+}
 const infraStack = new BlueprintInfrastructureStack(
     app,
     `BlueprintInfrastructureStack${blueprintId}`,
-    {
-        env: {
-            region: process.env.CDK_DEFAULT_REGION,
-            account: process.env.CDK_DEFAULT_ACCOUNT,
-        },
-        blueprintId,
-        blueprintType,
-        blueprintInfrastructureSharedConfigJson,
-        githubRepositoryName,
-        githubRepositoryOwner,
-        githubRepositoryMainBranchName,
-        githubConnectionArn,
-        tags: {
-            // The blueprint ID tag is used to update the corresponding blueprint infrastructure status in dynamodb
-            blueprintId,
-            blueprintType,
-        },
-    }
+    blueprintInfraStackProps
 );
 Aspects.of(infraStack).add(new CfnNagCustomResourceSuppressionAspect());
 Aspects.of(infraStack).add(new CfnNagServiceRoleDefaultPolicyResourceSuppressionAspect());

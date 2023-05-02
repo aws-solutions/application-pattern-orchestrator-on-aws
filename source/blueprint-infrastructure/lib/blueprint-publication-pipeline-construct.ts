@@ -17,9 +17,8 @@
 import { Construct } from 'constructs';
 import { ISecurityGroup, IVpc, SubnetType } from 'aws-cdk-lib/aws-ec2';
 import * as path from 'path';
-import { BlueprintType } from './blueprint-infrastructure-stack';
 import { generateReleaseStageBuildspec } from './buildspecs';
-import { Artifact, Pipeline } from 'aws-cdk-lib/aws-codepipeline';
+import { Artifact, IAction, Pipeline } from 'aws-cdk-lib/aws-codepipeline';
 import {
     AccountPrincipal,
     AnyPrincipal,
@@ -27,21 +26,22 @@ import {
     PolicyStatement,
     Role,
 } from 'aws-cdk-lib/aws-iam';
-import {
-    BucketAccessControl,
-    BlockPublicAccess,
-    Bucket,
-    BucketEncryption,
-} from 'aws-cdk-lib/aws-s3';
+import { BlockPublicAccess, Bucket, BucketEncryption } from 'aws-cdk-lib/aws-s3';
 import {
     CodeBuildAction,
+    CodeCommitSourceAction,
     CodeStarConnectionsSourceAction,
     LambdaInvokeAction,
     S3DeployAction,
     S3SourceAction,
     S3Trigger,
 } from 'aws-cdk-lib/aws-codepipeline-actions';
-import { BuildSpec, LinuxBuildImage, Project } from 'aws-cdk-lib/aws-codebuild';
+import {
+    BuildEnvironmentVariable,
+    BuildSpec,
+    LinuxBuildImage,
+    Project,
+} from 'aws-cdk-lib/aws-codebuild';
 import {
     Aws,
     Aspects,
@@ -54,6 +54,11 @@ import {
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { IKey, Key, Alias } from 'aws-cdk-lib/aws-kms';
 import {
+    BlueprintType,
+    GithubConfigPatternPublishPipeline,
+    CodeCommitPipelineConfig,
+} from './blueprint-infrastructure-types';
+import {
     addCfnNagSuppression,
     CfnNagResourcePathEndingWithSuppressionAspect,
 } from './cfn-nag-suppression';
@@ -64,10 +69,10 @@ export interface BlueprintPublicationPipelineConstructProps {
     blueprintId: string;
     blueprintType: BlueprintType;
     releaseBranchName: string;
-    githubRepositoryOwner: string;
-    githubRepositoryName: string;
-    githubRepositoryMainBranchName: string;
-    githubConnectionArn: string;
+    repositoryName: string;
+    repositoryMainBranchName: string;
+    githubConfig?: GithubConfigPatternPublishPipeline;
+    codeCommitPipelineConfig?: CodeCommitPipelineConfig;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     buildSpec: any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -159,29 +164,51 @@ export class BlueprintPublicationPipelineConstruct extends Construct {
             props.sharedConfig.blueprintInfrastructureBucketName
         );
 
-        pipeline.addStage({
-            stageName: 'Source',
-            actions: [
+        const sourceStageActions: IAction[] = [
+            new S3SourceAction({
+                actionName: 'Pattern_Infrastructure_Source',
+                output: blueprintInfrastructureOutput,
+                bucket: blueprintInfrastructureBucket,
+                // Do not automatically trigger the pipeline when the blueprint infrastructure definition changes
+                trigger: S3Trigger.NONE,
+                bucketKey: props.sharedConfig.blueprintInfrastructureArchiveName,
+            }),
+        ];
+
+        if (props.githubConfig) {
+            sourceStageActions.unshift(
                 new CodeStarConnectionsSourceAction({
-                    actionName: 'GitHub_Source',
-                    owner: props.githubRepositoryOwner,
-                    repo: props.githubRepositoryName,
-                    connectionArn: props.githubConnectionArn,
+                    actionName: `GitHub_Source`,
+                    owner: props.githubConfig.githubOrganization,
+                    repo: props.repositoryName,
+                    connectionArn: props.githubConfig.githubConnectionArn,
                     output: sourceOutput,
-                    branch: props.githubRepositoryMainBranchName,
+                    branch: props.repositoryMainBranchName,
                     variablesNamespace: sourceVariablesNamespace,
                     // Cloning the output allows to use semantic-release from codepipeline
                     codeBuildCloneOutput: true,
-                }),
-                new S3SourceAction({
-                    actionName: 'Pattern_Infrastructure_Source',
-                    output: blueprintInfrastructureOutput,
-                    bucket: blueprintInfrastructureBucket,
-                    // Do not automatically trigger the pipeline when the blueprint infrastructure definition changes
-                    trigger: S3Trigger.NONE,
-                    bucketKey: props.sharedConfig.blueprintInfrastructureArchiveName,
-                }),
-            ],
+                })
+            );
+        } else if (props.codeCommitPipelineConfig) {
+            sourceStageActions.unshift(
+                new CodeCommitSourceAction({
+                    actionName: `CodeCommit_Source`,
+                    repository: props.codeCommitPipelineConfig.patternRepository,
+                    output: sourceOutput,
+                    branch: props.repositoryMainBranchName,
+                    variablesNamespace: sourceVariablesNamespace,
+                    codeBuildCloneOutput: true,
+                })
+            );
+        } else {
+            throw new Error(
+                'Neither GitHub nor CodeCommit config passed to pattern pipeline construct'
+            );
+        }
+
+        pipeline.addStage({
+            stageName: 'Source',
+            actions: sourceStageActions,
         });
 
         // Re-use the update blueprint infrastructure project for the update stage
@@ -191,6 +218,21 @@ export class BlueprintPublicationPipelineConstruct extends Construct {
             props.sharedConfig.updateBlueprintInfrastructureProjectName
         );
 
+        const updatePipelineActionEnvVars: Record<string, BuildEnvironmentVariable> = {
+            BLUEPRINT_ID: { value: props.blueprintId },
+            BLUEPRINT_TYPE: { value: props.blueprintType },
+            REPOSITORY_NAME: {
+                value: props.repositoryName,
+            },
+            REPOSITORY_MAIN_BRANCH_NAME: {
+                value: props.repositoryMainBranchName,
+            },
+        };
+        if (props.githubConfig) {
+            updatePipelineActionEnvVars['GITHUB_REPOSITORY_OWNER'] = {
+                value: props.githubConfig.githubOrganization,
+            };
+        }
         pipeline.addStage({
             stageName: 'UpdatePipeline',
             actions: [
@@ -198,19 +240,7 @@ export class BlueprintPublicationPipelineConstruct extends Construct {
                     actionName: 'Update_Pattern_Infrastructure',
                     input: blueprintInfrastructureOutput,
                     project: updateBlueprintInfrastructureProject,
-                    environmentVariables: {
-                        BLUEPRINT_ID: { value: props.blueprintId },
-                        BLUEPRINT_TYPE: { value: props.blueprintType },
-                        GITHUB_REPOSITORY_OWNER: {
-                            value: props.githubRepositoryOwner,
-                        },
-                        GITHUB_REPOSITORY_NAME: {
-                            value: props.githubRepositoryName,
-                        },
-                        GITHUB_REPOSITORY_MAIN_BRANCH_NAME: {
-                            value: props.githubRepositoryMainBranchName,
-                        },
-                    },
+                    environmentVariables: updatePipelineActionEnvVars,
                 }),
             ],
         });
@@ -226,7 +256,7 @@ export class BlueprintPublicationPipelineConstruct extends Construct {
             outputs: [templatesOutput, controlsOutput, imagesOutput, markdownOutput],
             project: new Project(this, 'Build', {
                 environment: {
-                    buildImage: LinuxBuildImage.STANDARD_5_0,
+                    buildImage: LinuxBuildImage.STANDARD_7_0,
                 },
                 buildSpec: BuildSpec.fromObject(props.buildSpec),
                 vpc: props.vpc,
@@ -313,7 +343,7 @@ export class BlueprintPublicationPipelineConstruct extends Construct {
 
         const releaseProject = new Project(this, 'Release', {
             environment: {
-                buildImage: LinuxBuildImage.STANDARD_5_0,
+                buildImage: LinuxBuildImage.STANDARD_7_0,
                 environmentVariables: {
                     RELEASE_BRANCH_NAME: {
                         value: props.releaseBranchName,
@@ -332,6 +362,25 @@ export class BlueprintPublicationPipelineConstruct extends Construct {
                 subnetType: SubnetType.PRIVATE_WITH_EGRESS,
             },
         });
+        // permissions for CodeCommit pattern repo
+        if (!props.githubConfig) {
+            releaseProject.addToRolePolicy(
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: [
+                        'codecommit:GetRepository',
+                        'codecommit:CreateBranch',
+                        'codecommit:CreateUnreferencedMergeCommit',
+                        'codecommit:PutFile',
+                        'codecommit:CreateCommit',
+                        'codecommit:GitPush',
+                    ],
+                    resources: [
+                        `arn:aws:codecommit:${Aws.REGION}:${Aws.ACCOUNT_ID}:${props.repositoryName}`,
+                    ],
+                })
+            );
+        }
 
         // Add permission to login and publish to the blueprint code artifact repository for CDK blueprint release
         if (
@@ -399,7 +448,7 @@ export class BlueprintPublicationPipelineConstruct extends Construct {
                     this,
                     'PublishBlueprintToServiceCatalogLambda',
                     {
-                        runtime: Runtime.NODEJS_14_X,
+                        runtime: Runtime.NODEJS_18_X,
                         handler: 'handler',
                         entry: path.join(
                             __dirname,
@@ -505,7 +554,7 @@ export class BlueprintPublicationPipelineConstruct extends Construct {
             this,
             'RegisterBlueprintLambda',
             {
-                runtime: Runtime.NODEJS_14_X,
+                runtime: Runtime.NODEJS_18_X,
                 handler: 'handler',
                 entry: path.join(
                     __dirname,
@@ -697,6 +746,19 @@ export class BlueprintPublicationPipelineConstruct extends Construct {
             targetKey: encryptionKey,
         });
 
+        const pipelineArtifactAccessLoggingBucket = new Bucket(
+            this,
+            'PipelineArtifactsBucketAccesslog',
+            {
+                bucketName: PhysicalName.GENERATE_IF_NEEDED,
+                encryption: BucketEncryption.S3_MANAGED,
+                blockPublicAccess: new BlockPublicAccess(BlockPublicAccess.BLOCK_ALL),
+                versioned: true,
+                removalPolicy: RemovalPolicy.DESTROY,
+                autoDeleteObjects: true,
+            }
+        );
+
         const s3Bucket = new Bucket(this, 'PipelineArtifactsBucket', {
             bucketName: PhysicalName.GENERATE_IF_NEEDED,
             encryptionKey,
@@ -705,8 +767,7 @@ export class BlueprintPublicationPipelineConstruct extends Construct {
             versioned: true,
             removalPolicy: RemovalPolicy.DESTROY,
             autoDeleteObjects: true,
-            accessControl: BucketAccessControl.LOG_DELIVERY_WRITE,
-            serverAccessLogsPrefix: 'access-log',
+            serverAccessLogsBucket: pipelineArtifactAccessLoggingBucket,
         });
 
         s3Bucket.addToResourcePolicy(

@@ -23,7 +23,13 @@ import {
     Role,
     ServicePrincipal,
 } from 'aws-cdk-lib/aws-iam';
-import { IFunction, Function, FunctionProps, Tracing } from 'aws-cdk-lib/aws-lambda';
+import {
+    IFunction,
+    Function,
+    FunctionProps,
+    Tracing,
+    Runtime,
+} from 'aws-cdk-lib/aws-lambda';
 import { SqsDestination } from 'aws-cdk-lib/aws-lambda-destinations';
 import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
@@ -146,6 +152,7 @@ export class AWSLambdaFunction extends Construct {
             vpcSubnets: {
                 subnetType: props.subnetType ?? SubnetType.PRIVATE_WITH_EGRESS,
             },
+            runtime: Runtime.NODEJS_18_X,
             tracing: Tracing.ACTIVE,
         });
 
@@ -155,16 +162,6 @@ export class AWSLambdaFunction extends Construct {
                 {
                     id: 'AwsSolutions-IAM5',
                     reason: 'The wildcard is used as suffix with specific IAM permissions',
-                },
-            ],
-            true
-        );
-        NagSuppressions.addResourceSuppressions(
-            this.lambdaFunction,
-            [
-                {
-                    id: 'AwsSolutions-L1',
-                    reason: 'Node 14 is still supported version and solution relies on this version.',
                 },
             ],
             true

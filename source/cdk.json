@@ -6,6 +6,7 @@
         "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
         "@aws-cdk/core:stackRelativeExports": false,
         "@aws-cdk/aws-lambda:recognizeVersionProps": true,
+        "@aws-cdk/aws-s3:serverAccessLogsUseBucketPolicy": true,
         "appRegistrySyncScheduleExpression": "cron(0 3 * * ? *)"
     }
 }

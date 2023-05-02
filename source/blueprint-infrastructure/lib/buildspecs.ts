@@ -14,7 +14,7 @@
   limitations under the License.
 */
 /* eslint-disable @typescript-eslint/naming-convention */
-import { BlueprintType } from './blueprint-infrastructure-stack';
+import { BlueprintType, PatternRepoType } from './blueprint-infrastructure-types';
 
 // Security check codebuild trigger type
 type TriggerType = 'PR' | 'Pipeline';
@@ -23,11 +23,12 @@ type TriggerType = 'PR' | 'Pipeline';
 export const generateBuildStageBuildspec = (
     blueprintType: BlueprintType,
     triggerType: TriggerType,
+    patternRepoType: PatternRepoType,
     proxyUri?: string,
-    gitHubTokenSecretId?: string,
-    gitHubEnterpriseServerUrl?: string,
-    gitHubRepoName?: string,
-    gitHubRepoOwner?: string
+    githubTokenSecretId?: string,
+    githubEnterpriseServerUrl?: string,
+    repoName?: string,
+    githubRepoOwner?: string
 ) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const buildSpec: any = {
@@ -49,8 +50,8 @@ export const generateBuildStageBuildspec = (
         phases: {
             install: {
                 'runtime-versions': {
-                    ruby: 2.6,
-                    nodejs: 14,
+                    ruby: 3.2,
+                    nodejs: 18,
                 },
                 commands: [
                     'apt-get update -y',
@@ -108,17 +109,53 @@ export const generateBuildStageBuildspec = (
     };
 
     if (triggerType === 'PR') {
-        buildSpec.env['secrets-manager'] = {
-            GITHUB_TOKEN: gitHubTokenSecretId,
-        };
-
-        const gitHubBaseUrl = getGitHubBaseUrl(gitHubEnterpriseServerUrl);
-        buildSpec.phases.post_build.commands.push(
-            `PR_NUMBER=$(echo $CODEBUILD_WEBHOOK_TRIGGER | sed 's:.*/::')`,
-            `curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_TOKEN" ${gitHubBaseUrl}/repos/${gitHubRepoOwner}/${gitHubRepoName}/issues/$PR_NUMBER/comments -d "$(${getCfnNagCommand(
-                triggerType
-            )}| sed 's/-//g' | jq -Rsc '{"body": .}')"`
-        );
+        if (patternRepoType === 'GitHub') {
+            buildSpec.env['secrets-manager'] = {
+                GITHUB_TOKEN: githubTokenSecretId,
+            };
+            buildSpec.phases.post_build.commands.push(
+                `PR_NUMBER=$(echo $CODEBUILD_WEBHOOK_TRIGGER | sed 's:.*/::')`
+            );
+            const githubBaseUrl = getGithubBaseUrl(githubEnterpriseServerUrl);
+            buildSpec.phases.post_build.commands.push(
+                `curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_TOKEN" ${githubBaseUrl}/repos/${githubRepoOwner}/${repoName}/issues/$PR_NUMBER/comments -d "$(${getCfnNagCommand(
+                    triggerType
+                )}| sed 's/-//g' | jq -Rsc '{"body": .}')"`
+            );
+        } else {
+            // For CodeCommit
+            // Create approval rule
+            buildSpec.phases.post_build.commands.push(
+                `aws codecommit create-pull-request-approval-rule --pull-request-id $PR_NUMBER --approval-rule-name "Require one approval atleast" --approval-rule-content "{\\"Version\\": \\"2018-11-08\\",\\"Statements\\": [{\\"Type\\": \\"Approvers\\",\\"NumberOfApprovalsNeeded\\": 1}]}" || true`
+            );
+            // perform security check
+            buildSpec.phases.post_build.commands.push(
+                `SCAN_RESULT=$(${getCfnNagCommand(triggerType)}); EXITCODE=$?`
+            );
+            // Post security scan result in PR comments
+            buildSpec.phases.post_build.commands.push(
+                `aws codecommit post-comment-for-pull-request --pull-request-id $PR_NUMBER --repository-name ${repoName} --content "$SCAN_RESULT" --before-commit-id $BEFORE_COMMIT_ID --after-commit-id $AFTER_COMMIT_ID`
+            );
+            buildSpec.phases.post_build.commands.push(
+                `${getCfnNagCommand(triggerType)}; EXITCODE=$?`
+            );
+            buildSpec.phases.post_build.commands.push(
+                `if [ $EXITCODE -ne 0 ] 
+                then 
+                    PR_STATUS='REVOKE'
+                else
+                    PR_STATUS='APPROVE'
+                fi`
+            );
+            // get revision id
+            buildSpec.phases.post_build.commands.push(
+                `REVISION_ID=$(aws codecommit get-pull-request --pull-request-id $PR_NUMBER | jq -r '.pullRequest.revisionId')`
+            );
+            // approve/reject the PR based on the security scan result. For approval there should be no failures or warnings in security scan result
+            buildSpec.phases.post_build.commands.push(
+                `aws codecommit update-pull-request-approval-state --pull-request-id $PR_NUMBER --revision-id $REVISION_ID --approval-state $PR_STATUS`
+            );
+        }
     }
 
     if (blueprintType === 'CFN') {
@@ -129,6 +166,7 @@ export const generateBuildStageBuildspec = (
     } else {
         // For CDK based pattern
         // install dependencies
+        buildSpec.phases.install.commands.push('npm install --global yarn');
         buildSpec.phases.install.commands.push('yarn');
         // Run cdk synth and store output in template artifacts folder
         buildSpec.phases.build.commands.unshift(
@@ -159,9 +197,9 @@ const removeTrailingSlash = (str: string): string =>
     str.endsWith('/') ? str.slice(0, -1) : str;
 
 // get github base rest endpoint url
-const getGitHubBaseUrl = (gitHubEnterpriseServerUrl: string | undefined): string =>
-    gitHubEnterpriseServerUrl
-        ? removeTrailingSlash(gitHubEnterpriseServerUrl) + '/api/v3'
+const getGithubBaseUrl = (githubEnterpriseServerUrl: string | undefined): string =>
+    githubEnterpriseServerUrl
+        ? removeTrailingSlash(githubEnterpriseServerUrl) + '/api/v3'
         : 'https://api.github.com';
 
 const getCfnNagCommand = (triggerType: TriggerType): string => {
@@ -189,9 +227,9 @@ export const generateReleaseStageBuildspec = (
         phases: {
             install: {
                 'runtime-versions': {
-                    nodejs: 14,
+                    nodejs: 18,
                 },
-                commands: ['yarn global add lerna@4.0.0'],
+                commands: ['npm install lerna --global'],
             },
             build: {
                 commands: [
@@ -216,10 +254,13 @@ export const generateReleaseStageBuildspec = (
             'aws codeartifact login --tool npm --domain ${CODEARTIFACT_DOMAIN_NAME} --repository ${CODEARTIFACT_REPOSITORY_NAME}'
         );
         // publish packages
-        buildSpec.phases.build.commands.push('lerna publish -y');
+        // lerna by default uses atomic push when pushing to git which is not configurable.
+        // If unsuccesful, falls back to non-atomic push which fails the codebuild due to non 0 exit code.
+        // CodeCommit doesn't support atomic push. Hence using '||' to allow it to continue even with non-atomic commit.
+        buildSpec.phases.build.commands.push('lerna publish -y || true');
     } else {
         // For CFN based pattern only bump version and create tags without publishing
-        buildSpec.phases.build.commands.push('lerna version -y');
+        buildSpec.phases.build.commands.push('lerna version -y || true');
     }
 
     if (proxyUri && proxyUri.length > 0) {

@@ -34,7 +34,7 @@ export class DependencyConfigurationProvider {
         depedencyServiceName: DependencyServiceName
     ): Dependency {
         const dependency = this.applicationConfig.getDepdencyFor(depedencyServiceName);
-        if (!dependency || !dependency.githubTokenSecretId) {
+        if (!dependency?.githubTokenSecretId) {
             // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw new BlueprintError(
                 `Invalid configuration - No ${depedencyServiceName} dependency configured - githubTokenSecretId needs to be configured`,

@@ -14,7 +14,7 @@
   limitations under the License.
 */
 import { StackStatus } from '@aws-sdk/client-cloudformation';
-import { Attribute } from '../common/common-types';
+import { Attribute, PatternType } from '../common/common-types';
 
 /**
  * Blueprint object
@@ -34,6 +34,17 @@ export interface BlueprintObject {
     createdTimestamp: string;
     attributes?: Record<string, string>;
     lastCommitId?: string;
+}
+
+export interface BlueprintCodeRepoDetails {
+    patternRepoURL: string;
+    repoName: string;
+    branchName: string;
+    repoOwner?: string;
+}
+
+export interface BlueprintInitialiseRepoInput extends BlueprintCodeRepoDetails {
+    patternType: PatternType;
 }
 
 export interface BlueprintVersionObject {
@@ -112,11 +123,10 @@ export interface PaginatedResult<T> {
  * Code repository
  */
 export interface CodeRepository {
-    type: string;
-    repoOwner: string;
     branchName: string;
     repoName: string;
     detail?: Record<string, unknown>;
+    repoOwner?: string;
 }
 
 export const environmentContantValues = {
@@ -146,3 +156,5 @@ export interface AttributeInput {
 }
 
 export type QueryResult = [items: Attribute[], nextToken?: string];
+
+export type PatternRepoType = 'CodeCommit' | 'GitHub';

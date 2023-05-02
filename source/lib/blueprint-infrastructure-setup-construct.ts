@@ -15,6 +15,7 @@
 */
 import {
     Aspects,
+    Aws,
     aws_lambda_event_sources,
     aws_lambda_nodejs,
     Duration,
@@ -22,7 +23,13 @@ import {
     Stack,
 } from 'aws-cdk-lib';
 import { CfnDomain, CfnRepository } from 'aws-cdk-lib/aws-codeartifact';
-import { BuildSpec, LinuxBuildImage, Project, Source } from 'aws-cdk-lib/aws-codebuild';
+import {
+    BuildEnvironmentVariable,
+    BuildSpec,
+    LinuxBuildImage,
+    Project,
+    Source,
+} from 'aws-cdk-lib/aws-codebuild';
 import { ITable } from 'aws-cdk-lib/aws-dynamodb';
 import { IVpc, SecurityGroup, SubnetType } from 'aws-cdk-lib/aws-ec2';
 import {
@@ -32,15 +39,9 @@ import {
     ServicePrincipal,
     AnyPrincipal,
 } from 'aws-cdk-lib/aws-iam';
-import { IKey } from 'aws-cdk-lib/aws-kms';
+import { IKey, Key } from 'aws-cdk-lib/aws-kms';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
-import {
-    BlockPublicAccess,
-    Bucket,
-    BucketAccessControl,
-    BucketEncryption,
-    IBucket,
-} from 'aws-cdk-lib/aws-s3';
+import { BlockPublicAccess, Bucket, BucketEncryption, IBucket } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment } from 'aws-cdk-lib/aws-s3-deployment';
 import * as s3Source from 'aws-cdk-lib/aws-s3-deployment';
 import { CfnPortfolio } from 'aws-cdk-lib/aws-servicecatalog';
@@ -52,8 +53,17 @@ import {
     addCfnNagSuppression,
     CfnNagResourcePathEndingWithSuppressionAspect,
 } from './cfn-nag-suppression';
-import { LogLevelType, PatternType } from './blueprint-types';
+import {
+    BlueprintInfraSharedConfig,
+    GithubConfig,
+    LogLevelType,
+    PatternRepoType,
+    PatternType,
+} from './blueprint-types';
 import { NagSuppressions } from 'cdk-nag';
+import { Queue } from 'aws-cdk-lib/aws-sqs';
+import { LambdaSubscription } from 'aws-cdk-lib/aws-sns-subscriptions';
+import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 
 export interface BlueprintInfrastructureSetupProps {
     rapmMetaDataTable: ITable;
@@ -66,9 +76,7 @@ export interface BlueprintInfrastructureSetupProps {
     secretsManagerEncryptionKey: IKey;
     customUserAgent: string;
     vpc: IVpc;
-    githubUrl: string;
-    githubTokenSecretId: string;
-    githubConnectionArnSsmParam: string;
+    githubConfig?: GithubConfig;
     patternType: PatternType;
     solutionName: string;
     solutionTradeMarkName: string;
@@ -134,8 +142,7 @@ export class BlueprintInfrastructureSetup extends Construct {
             {
                 versioned: true,
                 blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-                encryption: BucketEncryption.KMS_MANAGED,
-                accessControl: BucketAccessControl.LOG_DELIVERY_WRITE,
+                encryption: BucketEncryption.S3_MANAGED,
                 serverAccessLogsPrefix: 'access-log',
                 autoDeleteObjects: props.removalPolicy === RemovalPolicy.DESTROY,
                 removalPolicy: props.removalPolicy,
@@ -220,9 +227,8 @@ export class BlueprintInfrastructureSetup extends Construct {
 
         const updateBlueprintInfrastructureProjectName = 'UpdateBlueprintInfrastructure';
 
-        const blueprintInfrastructureSharedConfig = {
+        const blueprintInfrastructureSharedConfig: BlueprintInfraSharedConfig = {
             vpcId: props.vpc.vpcId,
-            githubUrl: props.githubUrl,
             blueprintInfrastructureBucketName: blueprintInfrastructureBucket.bucketName,
             blueprintInfrastructureArchiveName: blueprintInfrastructureArchiveName,
             rapmMetaDataTable: props.rapmMetaDataTable.tableName,
@@ -245,7 +251,6 @@ export class BlueprintInfrastructureSetup extends Construct {
             secretsManagerEncryptionKeyArn: props.secretsManagerEncryptionKey.keyArn,
             codeArtifactDomainName: RAPM_CONSTANTS.RAPM_CODE_ARTIFACT_DOMAIN_NAME,
             codeArtifactRepositoryName: RAPM_CONSTANTS.RAPM_CODE_ARTIFACT_REPOSITORY_NAME,
-            githubTokenSecretId: props.githubTokenSecretId,
             blueprintServiceCatalogPortfolioId: serviceCatalogPortfolio.ref,
             customUserAgent: props.customUserAgent,
             proxyUri: proxyUri ?? '',
@@ -259,6 +264,168 @@ export class BlueprintInfrastructureSetup extends Construct {
             solutionTradeMarkName: props.solutionTradeMarkName,
             logLevel: props.logLevel,
         };
+        if (props.githubConfig) {
+            blueprintInfrastructureSharedConfig.githubConfig = {
+                githubUrl: props.githubConfig.githubUrl,
+                githubTokenSecretId: props.githubConfig.githubTokenSecretId,
+            };
+        } else {
+            // For codecommit, create webhook infra
+            // Create CodeCommit notification shared topic
+            const codeCommitNotificationTopicKey = new Key(
+                this,
+                'CodeCommitNotificationTopicKey',
+                {
+                    removalPolicy: RemovalPolicy.DESTROY,
+                    description: `KMS Key for CodeCommit PR notification topic`,
+                    alias: `APO-CodeCommit-Notification-Topic`,
+                    enableKeyRotation: true,
+                }
+            );
+            codeCommitNotificationTopicKey.addToResourcePolicy(
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    principals: [
+                        new ServicePrincipal('codestar-notifications.amazonaws.com'),
+                    ],
+                    actions: ['kms:GenerateDataKey*', 'kms:Decrypt'],
+                    resources: ['*'],
+                    conditions: {
+                        // eslint-disable-next-line @typescript-eslint/naming-convention
+                        StringEquals: {
+                            // eslint-disable-next-line @typescript-eslint/naming-convention
+                            'kms:ViaService': `sns.${Aws.REGION}.amazonaws.com`,
+                        },
+                    },
+                })
+            );
+            // CodeCommit notification SNS topic for PULL REQUEST event
+            const codeCommitPatternRepoNotificationTopic = new Topic(
+                this,
+                'CodeCommitRepoNotificationTopic',
+                {
+                    masterKey: codeCommitNotificationTopicKey,
+                }
+            );
+            codeCommitPatternRepoNotificationTopic.grantPublish(
+                new ServicePrincipal('codestar-notifications.amazonaws.com')
+            );
+
+            // DLQ for codecommit webhook lambda function
+            const dlq = new Queue(this, 'codecommit-webhook-dlq', {
+                removalPolicy: RemovalPolicy.DESTROY,
+                encryptionMasterKey: new Key(this, 'codecommit-webhook-dlq-cmk', {
+                    removalPolicy: RemovalPolicy.DESTROY,
+                    description: 'KMS Key for app-pattern/codecommit-webhook-dlq',
+                    alias: `APO-codecommit-webhook-dlq`,
+                    enableKeyRotation: true,
+                }),
+            });
+            NagSuppressions.addResourceSuppressions(dlq, [
+                {
+                    id: 'AwsSolutions-SQS3',
+                    reason: 'It is a dead letter queue configured for lambda',
+                },
+                {
+                    id: 'AwsSolutions-SQS4',
+                    reason: 'It is a dead letter queue configured for lambda',
+                },
+            ]);
+            // lambda function to invoke automated security scan on PULL REQUEST event
+            const codeCommitWebhookFunction = new aws_lambda_nodejs.NodejsFunction(
+                this,
+                'CodeCommitWebhookFunction',
+                {
+                    description:
+                        'Lambda function to trigger automated security check for CodeCommit pattern repo type',
+                    runtime: Runtime.NODEJS_18_X,
+                    entry: path.join(
+                        __dirname,
+                        '../lambda/blueprintgovernanceservice/src/codecommit/trigger-security-scan.ts'
+                    ),
+                    handler: 'handler',
+                    vpc: props.vpc,
+                    vpcSubnets: {
+                        subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+                    },
+                    securityGroups: [blueprintInfrastructureSecurityGroup],
+                    logRetention: RetentionDays.ONE_WEEK,
+                    deadLetterQueue: dlq,
+                    environment: {
+                        // eslint-disable-next-line @typescript-eslint/naming-convention
+                        LOG_LEVEL: props.logLevel,
+                    },
+                }
+            );
+            addCfnNagSuppression(codeCommitWebhookFunction, [
+                {
+                    id: 'W58',
+                    reason: 'The permission to write to CloudWatch Logs already exists',
+                },
+                {
+                    id: 'W92',
+                    reason: 'Some new AWS accounts have very low limit for concurrency causing deployment to fail',
+                },
+            ]);
+            NagSuppressions.addResourceSuppressions(
+                codeCommitWebhookFunction,
+                [
+                    {
+                        id: 'AwsSolutions-IAM4',
+                        reason: 'Need managed policy AWSLambdaBasicExecutionRole and AWSLambdaVPCAccessExecutionRole',
+                    },
+                    {
+                        id: 'AwsSolutions-L1',
+                        reason: 'Node 14 is still supported version, will be updated in next release.',
+                    },
+                    {
+                        id: 'AwsSolutions-IAM5',
+                        reason: 'It still has a namespace to restrict to only solution specific security check codebuild jobs',
+                    },
+                ],
+                true
+            );
+
+            // permission to invoke automated security check codebuild
+            codeCommitWebhookFunction.addToRolePolicy(
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: ['codebuild:StartBuild'],
+                    resources: [
+                        `arn:aws:codebuild:${Aws.REGION}:${Aws.ACCOUNT_ID}:project/BlueprintChecks_*`,
+                    ],
+                })
+            );
+
+            // Create lambda subscription to codecommit notification SNS topic so the lambda can trigger
+            // the security check CodeBuild job on every PR create event
+            codeCommitPatternRepoNotificationTopic.addSubscription(
+                new LambdaSubscription(codeCommitWebhookFunction)
+            );
+            codeCommitNotificationTopicKey.grantDecrypt(codeCommitWebhookFunction);
+
+            blueprintInfrastructureSharedConfig.codeCommitConfig = {
+                patternRepoNotificationTopicArn:
+                    codeCommitPatternRepoNotificationTopic.topicArn,
+            };
+        }
+
+        const updateBlueprintInfraProjectEnvVars: Record<
+            string,
+            BuildEnvironmentVariable
+        > = {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            BLUEPRINT_ID: { value: '' },
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            BLUEPRINT_TYPE: { value: '' },
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            REPOSITORY_NAME: { value: '' },
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            REPOSITORY_MAIN_BRANCH_NAME: { value: '' },
+        };
+        if (props.githubConfig) {
+            updateBlueprintInfraProjectEnvVars['GITHUB_REPOSITORY_OWNER'] = { value: '' };
+        }
 
         this.updateBlueprintInfrastructureProject = new Project(
             this,
@@ -271,32 +438,20 @@ export class BlueprintInfrastructureSetup extends Construct {
                 }),
                 role: updateBlueprintInfrastructureProjectRole,
                 environment: {
-                    buildImage: LinuxBuildImage.STANDARD_5_0,
+                    buildImage: LinuxBuildImage.STANDARD_7_0,
                 },
                 vpc: props.vpc,
                 subnetSelection: {
                     subnetType: SubnetType.PRIVATE_WITH_EGRESS,
                     onePerAz: true,
                 },
-                environmentVariables: {
-                    // The following variables are defined at build start time
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
-                    BLUEPRINT_ID: { value: '' },
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
-                    BLUEPRINT_TYPE: { value: '' },
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
-                    GITHUB_REPOSITORY_OWNER: { value: '' },
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
-                    GITHUB_REPOSITORY_NAME: { value: '' },
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
-                    GITHUB_REPOSITORY_MAIN_BRANCH_NAME: { value: '' },
-                },
+                environmentVariables: updateBlueprintInfraProjectEnvVars,
                 buildSpec: BuildSpec.fromObject(
                     this.generateUpdateBlueprintInfrastructureBuildSpec(
                         proxyUri,
                         blueprintInfrastructureSharedConfig,
                         blueprintInfrastructureNotificationTopic,
-                        props.githubConnectionArnSsmParam
+                        props.githubConfig
                     )
                 ),
             }
@@ -370,23 +525,25 @@ export class BlueprintInfrastructureSetup extends Construct {
             })
         );
 
-        updateBlueprintInfrastructureProjectRole.addToPolicy(
-            new PolicyStatement({
-                effect: Effect.ALLOW,
-                actions: ['ssm:GetParameters'],
-                resources: [
-                    `arn:${Stack.of(this).partition}:ssm:${Stack.of(this).region}:${
-                        Stack.of(this).account
-                    }:parameter/${props.githubConnectionArnSsmParam}`,
-                ],
-            })
-        );
+        if (props.githubConfig) {
+            updateBlueprintInfrastructureProjectRole.addToPolicy(
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: ['ssm:GetParameters'],
+                    resources: [
+                        `arn:${Stack.of(this).partition}:ssm:${Stack.of(this).region}:${
+                            Stack.of(this).account
+                        }:parameter/${props.githubConfig.githubConnectionArnSsmParam}`,
+                    ],
+                })
+            );
+        }
 
         const updateBlueprintInfraStatusLambda = new aws_lambda_nodejs.NodejsFunction(
             this,
             'UpdateBlueprintInfraStatusLambda',
             {
-                runtime: Runtime.NODEJS_14_X,
+                runtime: Runtime.NODEJS_18_X,
                 handler: 'handler',
                 entry: path.join(
                     __dirname,
@@ -411,10 +568,6 @@ export class BlueprintInfrastructureSetup extends Construct {
                 {
                     id: 'AwsSolutions-IAM4',
                     reason: 'Need managed policy AWSLambdaBasicExecutionRole and AWSLambdaVPCAccessExecutionRole',
-                },
-                {
-                    id: 'AwsSolutions-L1',
-                    reason: 'Node 14 is still supported version and solution relies on this version.',
                 },
             ],
             true
@@ -510,49 +663,44 @@ export class BlueprintInfrastructureSetup extends Construct {
 
     private generateUpdateBlueprintInfrastructureBuildSpec(
         proxyUri: string | undefined,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        blueprintInfrastructureSharedConfig: any,
+        blueprintInfrastructureSharedConfig: BlueprintInfraSharedConfig,
         blueprintInfrastructureNotificationTopic: Topic,
-        githubConnectionArnParamName: string
+        githubConfig?: GithubConfig
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ): any {
         const buildSpec = {
             version: 0.2,
-            env: {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                'parameter-store': {
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
-                    GITHUB_CONNECTION_ARN: githubConnectionArnParamName,
-                },
-            },
+            env: {},
             phases: {
                 install: {
                     // eslint-disable-next-line @typescript-eslint/naming-convention
                     'runtime-versions': {
-                        nodejs: 14,
+                        nodejs: 18,
                     },
                     commands: ['npm ci'],
                 },
                 build: {
                     commands: [
                         'npm run build',
-                        'npm run cdk deploy -- --require-approval never' +
-                            // ARNs of SNS topic that CloudFormation will notify with stack related events
-                            ` --notification-arns="${blueprintInfrastructureNotificationTopic.topicArn}"` +
-                            ` --context blueprintInfrastructureSharedConfigJson='${JSON.stringify(
-                                blueprintInfrastructureSharedConfig
-                            )}'` +
-                            // Get blueprint specific stack context from the codebuild project environment variables
-                            ' --context blueprintId=${BLUEPRINT_ID}' +
-                            ' --context blueprintType=${BLUEPRINT_TYPE}' +
-                            ' --context githubRepositoryOwner=${GITHUB_REPOSITORY_OWNER}' +
-                            ' --context githubRepositoryName=${GITHUB_REPOSITORY_NAME}' +
-                            ' --context githubRepositoryMainBranchName=${GITHUB_REPOSITORY_MAIN_BRANCH_NAME}' +
-                            ' --context githubConnectionArn=${GITHUB_CONNECTION_ARN}',
+                        `${this.generateBuildSpecCdkDeployCommand(
+                            githubConfig ? 'GitHub' : 'CodeCommit',
+                            blueprintInfrastructureNotificationTopic.topicArn,
+                            blueprintInfrastructureSharedConfig
+                        )}`,
                     ],
                 },
             },
         };
+
+        if (githubConfig) {
+            buildSpec['env'] = {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'parameter-store': {
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    GITHUB_CONNECTION_ARN: githubConfig.githubConnectionArnSsmParam,
+                },
+            };
+        }
 
         if (proxyUri) {
             // Configure npm to use http proxy
@@ -563,5 +711,32 @@ export class BlueprintInfrastructureSetup extends Construct {
         }
 
         return buildSpec;
+    }
+
+    private generateBuildSpecCdkDeployCommand(
+        patternRepoType: PatternRepoType,
+        blueprintInfrastructureNotificationTopicArn: string,
+        blueprintInfrastructureSharedConfig: BlueprintInfraSharedConfig
+    ): string {
+        let cdkDeployCommand =
+            'npm run cdk deploy -- --require-approval never' +
+            // ARNs of SNS topic that CloudFormation will notify with stack related events
+            ` --notification-arns="${blueprintInfrastructureNotificationTopicArn}"` +
+            ` --context blueprintInfrastructureSharedConfigJson='${JSON.stringify(
+                blueprintInfrastructureSharedConfig
+            )}'` +
+            // Get blueprint specific stack context from the codebuild project environment variables
+            ' --context blueprintId=${BLUEPRINT_ID}' +
+            ' --context blueprintType=${BLUEPRINT_TYPE}' +
+            ' --context repositoryName=${REPOSITORY_NAME}' +
+            ' --context repositoryMainBranchName=${REPOSITORY_MAIN_BRANCH_NAME}';
+
+        if (patternRepoType === 'GitHub') {
+            cdkDeployCommand =
+                cdkDeployCommand +
+                ' --context githubRepositoryOwner=${GITHUB_REPOSITORY_OWNER}' +
+                ' --context githubConnectionArn=${GITHUB_CONNECTION_ARN}';
+        }
+        return cdkDeployCommand;
     }
 }

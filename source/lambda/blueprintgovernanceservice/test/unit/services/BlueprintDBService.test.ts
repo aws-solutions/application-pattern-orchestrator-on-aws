@@ -61,7 +61,6 @@ const bluePrintObject: BlueprintObject = {
     infrastructureStackStatus: StackStatus.CREATE_IN_PROGRESS,
     patternRepoURL: 'ssh://ServerlessApp',
     codeRepository: {
-        type: 'CDK',
         repoOwner: 'awsapjsb',
         branchName: 'main',
         repoName: 'ServerlessApp',

@@ -30,12 +30,15 @@ import { HttpsProxyAgent } from 'https-proxy-agent';
 import * as url from 'whatwg-url';
 import { AppConfiguration } from './common/configuration/AppConfiguration';
 import { GetBlueprintInfoHandler } from './handlers/GetBlueprintInfoHandler';
-import { BlueprintRepoBuilderService } from './service/BlueprintRepoBuilderService';
 import { CodeBuildClient } from '@aws-sdk/client-codebuild';
 import { BlueprintPipelineBuilderService } from './service/BlueprintPipelineBuilderService';
 import { DependencyConfigurationProvider } from './common/providers/DependencyConfigurationProvider';
 import { InitialiseBlueprintPipelineHandler } from './handlers/InitialiseBlueprintPipelineHandler';
 import { customUserAgentString, customUserAgentV3 } from './common/customUserAgent';
+import { PatternRepoType } from '../../../lib/blueprint-types';
+import { BlueprintCodeCommitRepoBuilderService } from './service/blueprint-repo-builder/BlueprintCodeCommitRepoBuilderService';
+import { BlueprintGitHubRepoBuilderService } from './service/blueprint-repo-builder/BlueprintGitHubRepoBuilderService';
+import { CodeCommitClient } from '@aws-sdk/client-codecommit';
 AWS.config.logger = console;
 
 export function setupContainer(router: Router<ServerlessResponse>): void {
@@ -71,6 +74,15 @@ export function setupContainer(router: Router<ServerlessResponse>): void {
         ),
     });
 
+    container.register<CodeCommitClient>('CodeCommitClient', {
+        useValue: AWSXRay.captureAWSv3Client(
+            new CodeCommitClient({
+                region: appConfiguration.region,
+                customUserAgent: customUserAgentV3,
+            })
+        ),
+    });
+
     container.register<AWS.SSM>('SSM', { useValue: new AWS.SSM(configuration) });
 
     container.register<SecretsManager>('SecretsManager', {
@@ -100,9 +112,24 @@ export function setupContainer(router: Router<ServerlessResponse>): void {
         useClass: GetBlueprintInfoHandler,
     });
 
-    container.register<BlueprintRepoBuilderService>('BlueprintRepoBuilderService', {
-        useClass: BlueprintRepoBuilderService,
-    });
+    const patternRepoType: PatternRepoType = (process.env.PATTERN_REPO_TYPE ??
+        'CodeCommit') as PatternRepoType;
+
+    if (patternRepoType === 'GitHub') {
+        container.register<BlueprintGitHubRepoBuilderService>(
+            'BlueprintRepoBuilderService',
+            {
+                useClass: BlueprintGitHubRepoBuilderService,
+            }
+        );
+    } else {
+        container.register<BlueprintCodeCommitRepoBuilderService>(
+            'BlueprintRepoBuilderService',
+            {
+                useClass: BlueprintCodeCommitRepoBuilderService,
+            }
+        );
+    }
 
     container.register<BlueprintPipelineBuilderService>(
         'BlueprintPipelineBuilderService',

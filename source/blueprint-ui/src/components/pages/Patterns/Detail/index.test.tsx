@@ -293,6 +293,37 @@ describe('PatternDetails', () => {
         );
     });
 
+    test('pattern details for codecommit repo should have the codecommit repo url', () => {
+        const testRegion = 'ap-southeast-2';
+        const patternRepoUrl = fixtureGetCDKPatternDetail.metadata.patternRepoURL;
+        fixtureGetCDKPatternDetail.metadata.patternRepoURL = `https://git-codecommit.${testRegion}.amazonaws.com/v1/repos/${fixtureGetCDKPatternDetail.metadata.codeRepository.repoName}`;
+        mockReactQuery.useQuery.mockImplementation(
+            (queryKey: QueryKey, _queryFn: QueryFunction) => {
+                if (queryKey === 'PatternDetails') {
+                    return {
+                        data: fixtureGetCDKPatternDetail,
+                    } as UseQueryResult;
+                }
+
+                return { data: {} } as UseQueryResult;
+            }
+        );
+
+        const { getByText } = render(
+            <BrowserRouter>
+                <PatternDetails />
+            </BrowserRouter>
+        );
+        expect(getByText('View Code Repository')).toBeInTheDocument();
+        act(() => {
+            fireEvent.click(getByText('View Code Repository'));
+        });
+        expect(window.open).toBeCalledWith(
+            `https://${testRegion}.console.aws.amazon.com/codesuite/codecommit/repositories/${fixtureGetCDKPatternDetail.metadata.codeRepository.repoName}/browse?region=${testRegion}`
+        );
+        fixtureGetCDKPatternDetail.metadata.patternRepoURL = patternRepoUrl;
+    });
+
     test('render to show CFN pattern details', () => {
         mockReactQuery.useQuery.mockImplementation(
             (queryKey: QueryKey, _queryFn: QueryFunction) => {

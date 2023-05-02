@@ -146,9 +146,7 @@ describe('Publish CFN blueprint handler tests', () => {
         cloudFormationClientMock.reset();
         ddbMock.reset();
         ddbMock.on(GetCommand).resolves(FIXTURE_GET_PATTERN_RESPONSE);
-        s3Mock.on(GetObjectCommand).resolves({
-            Body: fs.createReadStream(path.resolve(__dirname, 'publish.test.ts')),
-        });
+        s3Mock.on(GetObjectCommand).resolves({});
         cloudFormationClientMock.on(ValidateTemplateCommand).resolves({
             $metadata: {
                 httpStatusCode: 200,

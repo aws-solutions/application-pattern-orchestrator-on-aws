@@ -128,7 +128,7 @@ export class BlueprintNotification extends Construct {
             vpc: props.vpc,
             vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
             logRetention: logs.RetentionDays.ONE_WEEK,
-            runtime: lambda.Runtime.NODEJS_14_X,
+            runtime: lambda.Runtime.NODEJS_18_X,
             environment: {
                 /* eslint-disable @typescript-eslint/naming-convention */
                 MAPPING_TABLE: props.patternEmailTable.tableName,
@@ -160,10 +160,6 @@ export class BlueprintNotification extends Construct {
                 {
                     id: 'AwsSolutions-IAM5',
                     reason: 'Need to use * for sending emails using AWS SES',
-                },
-                {
-                    id: 'AwsSolutions-L1',
-                    reason: 'Node 14 is still supported version and solution relies on this version.',
                 },
             ],
             true

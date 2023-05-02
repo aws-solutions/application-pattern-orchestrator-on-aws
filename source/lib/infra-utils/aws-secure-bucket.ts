@@ -18,6 +18,7 @@ import { aws_s3 as s3 } from 'aws-cdk-lib';
 import { IKey, Key } from 'aws-cdk-lib/aws-kms';
 import { PolicyStatement, Effect, AnyPrincipal } from 'aws-cdk-lib/aws-iam';
 import { NagSuppressions } from 'cdk-nag';
+import { addCfnNagSuppression } from '../cfn-nag-suppression';
 
 export type AWSSecureBucketProps = Omit<
     s3.BucketProps,
@@ -43,15 +44,43 @@ export class AWSSecureBucket extends Construct {
                   enableKeyRotation: true,
               });
 
+        const serverAccessLogBucket = new s3.Bucket(this, `ags-accesslog-${id}`, {
+            ...props,
+            encryption: s3.BucketEncryption.S3_MANAGED,
+            blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+            versioned: true,
+        });
         this.bucket = new s3.Bucket(this, `ags-${id}`, {
             ...props,
             encryptionKey: this.encryptionKey,
             encryption: s3.BucketEncryption.KMS,
             blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-            accessControl: s3.BucketAccessControl.LOG_DELIVERY_WRITE,
-            serverAccessLogsPrefix: 'access-log',
+            serverAccessLogsBucket: serverAccessLogBucket,
             versioned: true,
         });
+        serverAccessLogBucket.addToResourcePolicy(
+            new PolicyStatement({
+                sid: 'HttpsOnly',
+                resources: [`${serverAccessLogBucket.bucketArn}/*`],
+                actions: ['*'],
+                principals: [new AnyPrincipal()],
+                effect: Effect.DENY,
+                conditions: {
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    Bool: {
+                        // eslint-disable-next-line @typescript-eslint/naming-convention
+                        'aws:SecureTransport': 'false',
+                    },
+                },
+            })
+        );
+
+        addCfnNagSuppression(serverAccessLogBucket as Construct, [
+            {
+                id: 'W35',
+                reason: 'This is the access logging bucket itself',
+            },
+        ]);
 
         this.bucket.addToResourcePolicy(
             new PolicyStatement({
@@ -71,6 +100,16 @@ export class AWSSecureBucket extends Construct {
         );
         NagSuppressions.addResourceSuppressions(
             this.bucket,
+            [
+                {
+                    id: 'AwsSolutions-S10',
+                    reason: 'This is false positive. Bucket policy has condition to block Non Https traffic',
+                },
+            ],
+            true
+        );
+        NagSuppressions.addResourceSuppressions(
+            serverAccessLogBucket,
             [
                 {
                     id: 'AwsSolutions-S10',

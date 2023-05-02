@@ -109,7 +109,7 @@ export class AttributeUpdateHandler extends AttributeBaseHandler {
         let validated = true;
         const errors: string[] = [];
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (!event || !event.body || !isValidJSON(event.body)) {
+        if (!event?.body || !isValidJSON(event.body)) {
             validated &&= false;
             errors.push(
                 'Valid JSON payload is required in the body of the update request.'

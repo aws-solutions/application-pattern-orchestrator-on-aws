@@ -22,8 +22,8 @@ import {
     Bucket,
     IBucket,
     BucketEncryption,
-    BucketAccessControl,
     BlockPublicAccess,
+    ObjectOwnership,
 } from 'aws-cdk-lib/aws-s3';
 
 import {
@@ -60,7 +60,7 @@ export class BlueprintFrontend extends Construct {
             encryption: BucketEncryption.S3_MANAGED,
             blockPublicAccess: new BlockPublicAccess(BlockPublicAccess.BLOCK_ALL),
             serverAccessLogsPrefix: 'access_logs/',
-            accessControl: BucketAccessControl.LOG_DELIVERY_WRITE,
+            objectOwnership: ObjectOwnership.OBJECT_WRITER,
             versioned: true,
             removalPolicy: props.removalPolicy,
             autoDeleteObjects: props.removalPolicy === RemovalPolicy.DESTROY,
@@ -123,6 +123,7 @@ export class BlueprintFrontend extends Construct {
             autoDeleteObjects: props.removalPolicy === RemovalPolicy.DESTROY,
             removalPolicy: props.removalPolicy,
             versioned: true,
+            objectOwnership: ObjectOwnership.OBJECT_WRITER,
             blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
             encryption: BucketEncryption.S3_MANAGED,
         });
@@ -194,10 +195,12 @@ export class BlueprintFrontend extends Construct {
          */
         new CfnOutput(this, 'CloudFrontURL', {
             value: this.distribution.distributionDomainName,
+            description: 'CloudFront distribution Url',
             exportName: 'rapmExportedPortalUrl',
         });
         new CfnOutput(this, 'ReactAppBucketName', {
             value: this.frontendBucket.bucketName,
+            description: 'Static UI assets bucket name',
         });
     }
 

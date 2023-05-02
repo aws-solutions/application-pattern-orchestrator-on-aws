@@ -23,10 +23,14 @@ import { AsyncRequestHandler } from '../common/AsyncRequestHandler';
 import { inject, injectable } from 'tsyringe';
 import { ServerlessResponse } from '../common/ServerlessResponse';
 import { Logger, LoggerFactory } from '../common/logging';
-import { BlueprintObject } from '../types/BlueprintType';
+import {
+    BlueprintCodeRepoDetails,
+    BlueprintObject,
+    PatternRepoType,
+} from '../types/BlueprintType';
 import { stringToSlug } from '../service/Id';
 import { BlueprintDBService } from '../service/BlueprintDBService';
-import { BlueprintRepoBuilderService } from '../service/BlueprintRepoBuilderService';
+import { IBlueprintRepoBuilderService } from '../service/blueprint-repo-builder/IBlueprintRepoBuilderService';
 import { BlueprintPipelineBuilderService } from '../service/BlueprintPipelineBuilderService';
 import { StackStatus } from '@aws-sdk/client-cloudformation';
 import { PatternType } from '../common/common-types';
@@ -42,18 +46,7 @@ export interface CreateBlueprintRequest {
     patternType: PatternType;
     email: string; //Email address of the Blueprint owner
     owner?: string; //Owner of the Blueprint
-    codeRepositoryDetails?: CodeRepoDetails;
-    codeRepositoryType: string;
     attributes?: Record<string, string>;
-}
-
-interface CodeRepoDetails {
-    patternRepoURL: string; //Blueprint Repo to be onboarded
-    repoOwner: string; //Repo Owner
-    branch: string;
-    repoName: string;
-    branchName: string;
-    details?: Record<string, unknown>;
 }
 
 /**
@@ -87,8 +80,6 @@ interface CodeRepoDetails {
                 "SecurityLevel": "Medium"
             },
             "codeRepository": {
-                "type": "github",
-                "repoOwner": "enterprise",
                 "branchName": "master",
                 "repoName": "sample-pattern1"
             }
@@ -104,7 +95,6 @@ export class CreateBlueprintRequestHandler
      * Logger of create blueprint request handler
      */
     private readonly logger: Logger;
-    private readonly codeOwners: string[];
 
     /**
      * Creates an instance of create blueprint request handler.
@@ -118,12 +108,11 @@ export class CreateBlueprintRequestHandler
         @inject('BlueprintDBService')
         private readonly blueprintDBService: BlueprintDBService,
         @inject('BlueprintRepoBuilderService')
-        private readonly blueprintRepoBuilderService: BlueprintRepoBuilderService,
+        private readonly blueprintRepoBuilderService: IBlueprintRepoBuilderService,
         @inject('BlueprintPipelineBuilderService')
         private readonly blueprintPipelineBuilderService: BlueprintPipelineBuilderService
     ) {
         this.logger = loggerFactory.getLogger('CreateBlueprintRequestHandler');
-        this.codeOwners = process.env.CODEOWNERS ? process.env.CODEOWNERS.split(',') : [];
     }
 
     private async validateInputData(
@@ -162,80 +151,7 @@ export class CreateBlueprintRequestHandler
                     patternCreated: 1,
                 },
             };
-            await sendAnonymousMetric(operationalMetric);
-        }
-    }
-
-    private async createRepository(
-        input: CreateBlueprintRequest
-    ): Promise<ServerlessResponse | undefined> {
-        const blueprintName = stringToSlug(input.name);
-        if (!input.codeRepositoryDetails || !input.codeRepositoryDetails.patternRepoURL) {
-            try {
-                this.logger.debug(`Creating repo: ${blueprintName}`);
-                const response = await this.blueprintRepoBuilderService.createRepo(
-                    blueprintName
-                );
-                this.logger.debug(response);
-
-                if (response.status == '201') {
-                    input.codeRepositoryDetails = {} as CodeRepoDetails;
-                    input.codeRepositoryDetails.patternRepoURL = response.data.git_url;
-                    input.codeRepositoryDetails.repoName = response.data.name;
-                    input.codeRepositoryDetails.branchName = response.data.default_branch;
-                    input.codeRepositoryDetails.repoOwner = response.data.owner.login;
-                    if (
-                        !input.codeRepositoryDetails.patternRepoURL ||
-                        !input.codeRepositoryDetails.repoName ||
-                        !input.codeRepositoryDetails.branchName ||
-                        !input.codeRepositoryDetails.repoOwner
-                    ) {
-                        return ServerlessResponse.ofObject(response.status, {
-                            Message:
-                                'Repo not properly configured with repo Name and Owner',
-                        });
-                    }
-
-                    // Initialise repo
-                    this.logger.debug(`Initialising repo: ${blueprintName}`);
-                    await this.blueprintRepoBuilderService.initializeRepo(
-                        response.data.default_branch,
-                        input.codeRepositoryDetails.repoName,
-                        input.patternType
-                    );
-
-                    // Enable branch protection on main branch
-                    await this.blueprintRepoBuilderService.enableBranchProtection(
-                        input.codeRepositoryDetails.repoOwner,
-                        input.codeRepositoryDetails.repoName,
-                        input.codeRepositoryDetails.branchName
-                    );
-
-                    // Add codeowners if any
-                    if (this.codeOwners.length > 0) {
-                        await this.blueprintRepoBuilderService.addCodeowners(
-                            input.codeRepositoryDetails.repoOwner,
-                            input.codeRepositoryDetails.repoName,
-                            this.codeOwners
-                        );
-                    }
-
-                    await this.sendOperationalMetric();
-                } else {
-                    return ServerlessResponse.ofObject(response.status, {
-                        response,
-                    });
-                }
-            } catch (e) {
-                this.logger.error(
-                    `Error in accessing github failed ${JSON.stringify(e)}`
-                );
-
-                return ServerlessResponse.ofObject(500, {
-                    Message:
-                        'Pattern github repo creation failed  kindly contact Administrator ',
-                });
-            }
+            sendAnonymousMetric(operationalMetric);
         }
     }
 
@@ -266,15 +182,23 @@ export class CreateBlueprintRequestHandler
         // prepare data to be written to database
         const creationTime = new Date();
         const blueprintName = stringToSlug(input.name);
+        let blueprintCodeRepoDetails: BlueprintCodeRepoDetails;
+        try {
+            this.logger.debug(`Creating repo: ${blueprintName}`);
+            blueprintCodeRepoDetails =
+                await this.blueprintRepoBuilderService.createAndInitializeRepo(
+                    blueprintName,
+                    input.patternType
+                );
+        } catch (e) {
+            this.logger.error(
+                `Error in creating/initialising pattern repo ${blueprintName}, failed with error: ${JSON.stringify(
+                    e
+                )}`
+            );
 
-        const createRepoError = await this.createRepository(input);
-        if (createRepoError) {
-            return createRepoError;
-        }
-
-        if (!input.codeRepositoryDetails) {
-            return ServerlessResponse.ofObject(410, {
-                'Error Message': 'Unable to create code repository.',
+            return ServerlessResponse.ofObject(500, {
+                Message: `Error in creating/initialising pattern repo ${blueprintName}, kindly contact Administrator`,
             });
         }
 
@@ -288,16 +212,18 @@ export class CreateBlueprintRequestHandler
             updatedTimestamp: creationTime.toISOString(),
             createdTimestamp: creationTime.toISOString(),
             infrastructureStackStatus: StackStatus.CREATE_IN_PROGRESS,
-            patternRepoURL: input.codeRepositoryDetails.patternRepoURL,
+            patternRepoURL: blueprintCodeRepoDetails.patternRepoURL,
             attributes: input.attributes,
             codeRepository: {
-                type: input.codeRepositoryType || 'github',
-                repoOwner: input.codeRepositoryDetails.repoOwner,
-                branchName: input.codeRepositoryDetails.branchName,
-                repoName: input.codeRepositoryDetails.repoName,
-                detail: input.codeRepositoryDetails.details,
+                branchName: blueprintCodeRepoDetails.branchName,
+                repoName: blueprintCodeRepoDetails.repoName,
             },
         };
+        const patternRepoType: PatternRepoType = (process.env.PATTERN_REPO_TYPE ??
+            'CodeCommit') as PatternRepoType;
+        if (patternRepoType === 'GitHub') {
+            blueprintObject.codeRepository.repoOwner = blueprintCodeRepoDetails.repoOwner;
+        }
 
         try {
             this.logger.debug(
@@ -327,6 +253,7 @@ export class CreateBlueprintRequestHandler
             });
         }
         await this.blueprintDBService.createBlueprint(blueprintObject);
+        this.sendOperationalMetric();
         return ServerlessResponse.ofObject(201, { patternObject: blueprintObject });
     }
 
@@ -337,7 +264,6 @@ export class CreateBlueprintRequestHandler
      */
     private async isBlueprintExists(blueprintId: string): Promise<boolean> {
         const response = await this.blueprintDBService.getBlueprintById(blueprintId);
-        this.logger.info(response);
         if (response) return true;
         return false;
     }

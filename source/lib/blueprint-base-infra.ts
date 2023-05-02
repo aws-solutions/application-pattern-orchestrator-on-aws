@@ -17,6 +17,7 @@ import {
     FlowLogDestination,
     InterfaceVpcEndpoint,
     InterfaceVpcEndpointAwsService,
+    IpAddresses,
     IVpc,
     SubnetType,
     Vpc,
@@ -69,7 +70,7 @@ export class BlueprintBaseInfra extends Construct {
         const subnetConfig = defaultSubnetConfiguration;
 
         this.vpc = new Vpc(this, 'vpc', {
-            cidr: vpcCidr,
+            ipAddresses: IpAddresses.cidr(vpcCidr),
             subnetConfiguration: subnetConfig,
             maxAzs: 2,
         });

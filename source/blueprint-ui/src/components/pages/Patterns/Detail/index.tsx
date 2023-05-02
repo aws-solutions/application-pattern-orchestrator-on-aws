@@ -215,14 +215,36 @@ const PatternDetails: FunctionComponent = () => {
                         {patternData?.metadata && (
                             <Button
                                 variant="primary"
-                                onClick={() =>
-                                    window.open(
-                                        patternData.metadata.patternRepoURL?.replace(
-                                            'git://',
-                                            'https://'
+                                onClick={() => {
+                                    const codecommit = 'codecommit';
+                                    if (
+                                        patternData.metadata.patternRepoURL.includes(
+                                            codecommit
                                         )
-                                    )
-                                }
+                                    ) {
+                                        const region =
+                                            patternData.metadata.patternRepoURL.substring(
+                                                patternData.metadata.patternRepoURL.indexOf(
+                                                    codecommit
+                                                ) +
+                                                    codecommit.length +
+                                                    1,
+                                                patternData.metadata.patternRepoURL.indexOf(
+                                                    'amazonaws'
+                                                ) - 1
+                                            );
+                                        window.open(
+                                            `https://${region}.console.aws.amazon.com/codesuite/codecommit/repositories/${patternData.metadata.codeRepository?.repoName}/browse?region=${region}`
+                                        );
+                                    } else {
+                                        window.open(
+                                            patternData.metadata.patternRepoURL.replace(
+                                                'git://',
+                                                'https://'
+                                            )
+                                        );
+                                    }
+                                }}
                             >
                                 View Code Repository
                             </Button>

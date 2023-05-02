@@ -18,9 +18,8 @@ import * as aws from 'aws-sdk';
 import * as awsmock from 'aws-sdk-mock';
 import { BlueprintDBService } from '../../../src/service/BlueprintDBService';
 import { StaticLoggerFactory } from '../../../src/common/logging';
-import { BlueprintRepoBuilderService } from '../../../src/service/BlueprintRepoBuilderService';
 import { BlueprintPipelineBuilderService } from '../../../src/service/BlueprintPipelineBuilderService';
-import { gitHubResponseStub as gitHubResponse } from '../stubs/githubResponseStub';
+import { githubCreateAndInitialiseRepoResponse } from '../stubs/githubResponseStub';
 import {
     CreateBlueprintRequest,
     CreateBlueprintRequestHandler,
@@ -28,6 +27,7 @@ import {
 import { APIGatewayProxyEvent, Context } from 'aws-lambda';
 import { Attribute } from '../../../src/common/common-types';
 import * as OperationalMetric from '../../../src/common/metrics/operational-metric';
+import { BlueprintGitHubRepoBuilderService } from '../../../src/service/blueprint-repo-builder/BlueprintGitHubRepoBuilderService';
 
 const inputRequest: CreateBlueprintRequest = {
     name: 'serverlessapp',
@@ -35,7 +35,6 @@ const inputRequest: CreateBlueprintRequest = {
     patternType: 'CDK',
     email: 'AWS@', //Email address of the Blueprint owner
     owner: 'awsapjsb', //Owner of the Blueprint
-    codeRepositoryType: 'gitHub',
 };
 const attribute: Attribute = {
     id: 'DATACLASSIFICATION:GROUP',
@@ -69,7 +68,6 @@ describe('test CreateBlueprintRequestHandler', () => {
             patternType: 'CDK',
             email: 'AWS@', //Email address of the Blueprint owner
             owner: 'awsapjsb', //Owner of the Blueprint
-            codeRepositoryType: 'gitHub',
             attributes: {
                 dataClassification: 'Group',
             },
@@ -93,12 +91,13 @@ describe('test CreateBlueprintRequestHandler', () => {
         blueprintDBService.getAttributeById = getAttributeByIdHandle;
         getAttributeByIdHandle.mockReturnValue(attribute);
 
-        const blueprintRepoBuilderService = mock(BlueprintRepoBuilderService);
+        const blueprintRepoBuilderService = mock(BlueprintGitHubRepoBuilderService);
         const blueprintRepoBuilderServiceHandle = jest.fn();
-        blueprintRepoBuilderService.createRepo = blueprintRepoBuilderServiceHandle;
-        blueprintRepoBuilderServiceHandle.mockReturnValue(gitHubResponse);
-        blueprintRepoBuilderService.enableBranchProtection = jest.fn();
-        blueprintRepoBuilderService.addCodeowners = jest.fn();
+        blueprintRepoBuilderService.createAndInitializeRepo =
+            blueprintRepoBuilderServiceHandle;
+        blueprintRepoBuilderServiceHandle.mockReturnValue(
+            githubCreateAndInitialiseRepoResponse
+        );
 
         const blueprintPipelineBuilderService = mock(BlueprintPipelineBuilderService);
         const blueprintPipelineBuilderServiceHandle = jest.fn();
@@ -132,62 +131,8 @@ describe('test CreateBlueprintRequestHandler', () => {
             data: { patternCreated: 1 },
         });
         expect(output).toBeDefined();
-        // assert
-        expect(output).not.toBeUndefined();
         expect(output.statusCode).toBe(201);
-        expect(blueprintRepoBuilderService.enableBranchProtection).toBeCalled();
-        expect(blueprintRepoBuilderService.addCodeowners).toBeCalled();
-        expect(blueprintRepoBuilderService.addCodeowners).toHaveBeenCalledWith(
-            expect.anything(),
-            expect.anything(),
-            ['@owner1', '@owner2']
-        );
-    });
-
-    test('should not add codeowner if none defined', async () => {
-        process.env.CODEOWNERS = '';
-        const blueprintDBService = mock(BlueprintDBService);
-        const getBlueprintByIdHandle = jest.fn();
-        blueprintDBService.getBlueprintById = getBlueprintByIdHandle;
-        getBlueprintByIdHandle.mockReturnValue(false);
-
-        const createBlueprintHandle = jest.fn();
-        blueprintDBService.createBlueprint = createBlueprintHandle;
-        createBlueprintHandle.mockReturnValue({});
-        const blueprintRepoBuilderService = mock(BlueprintRepoBuilderService);
-        const blueprintRepoBuilderServiceHandle = jest.fn();
-        blueprintRepoBuilderService.createRepo = blueprintRepoBuilderServiceHandle;
-        blueprintRepoBuilderServiceHandle.mockReturnValue(gitHubResponse);
-        blueprintRepoBuilderService.enableBranchProtection = jest.fn();
-        blueprintRepoBuilderService.addCodeowners = jest.fn();
-
-        const blueprintPipelineBuilderService = mock(BlueprintPipelineBuilderService);
-        const blueprintPipelineBuilderServiceHandle = jest.fn();
-
-        blueprintPipelineBuilderService.invokeCodeBuildProject =
-            blueprintPipelineBuilderServiceHandle;
-        blueprintPipelineBuilderServiceHandle.mockReturnValue({});
-
-        const objectUnderTest = new CreateBlueprintRequestHandler(
-            new StaticLoggerFactory(),
-            blueprintDBService,
-            blueprintRepoBuilderService,
-            blueprintPipelineBuilderService
-        );
-        // act
-        const output = await objectUnderTest.handle(
-            {
-                body: JSON.stringify(inputRequest),
-                headers: { ttl: new Date().getTime().toString() },
-            } as unknown as APIGatewayProxyEvent,
-            {} as Context
-        );
-        expect(output).toBeDefined();
-        // assert
-        expect(output).not.toBeUndefined();
-        expect(output.statusCode).toBe(201);
-        expect(blueprintRepoBuilderService.enableBranchProtection).toBeCalled();
-        expect(blueprintRepoBuilderService.addCodeowners).not.toBeCalled();
+        expect(blueprintRepoBuilderService.createAndInitializeRepo).toBeCalled();
     });
 
     test('should return 4XX error if blueprint exists', async () => {
@@ -195,7 +140,7 @@ describe('test CreateBlueprintRequestHandler', () => {
         const getBlueprintByIdHandle = jest.fn();
         blueprintDBService.getBlueprintById = getBlueprintByIdHandle;
         getBlueprintByIdHandle.mockReturnValue(true);
-        const blueprintRepoBuilderService = mock(BlueprintRepoBuilderService);
+        const blueprintRepoBuilderService = mock(BlueprintGitHubRepoBuilderService);
         const blueprintPipelineBuilderService = mock(BlueprintPipelineBuilderService);
 
         const objectUnderTest = new CreateBlueprintRequestHandler(
@@ -223,11 +168,13 @@ describe('test CreateBlueprintRequestHandler', () => {
         const getBlueprintByIdHandle = jest.fn();
         blueprintDBService.getBlueprintById = getBlueprintByIdHandle;
         getBlueprintByIdHandle.mockReturnValue(false);
-        const blueprintRepoBuilderService = mock(BlueprintRepoBuilderService);
-        const blueprintRepoBuilderServiceHandle = jest.fn();
-        blueprintRepoBuilderService.createRepo = blueprintRepoBuilderServiceHandle;
-        gitHubResponse.status = 500;
-        blueprintRepoBuilderServiceHandle.mockReturnValue(gitHubResponse);
+        const blueprintRepoBuilderService = mock(BlueprintGitHubRepoBuilderService);
+        const blueprintRepoBuilderServiceCreateRepoAndInit = jest.fn();
+        blueprintRepoBuilderService.createAndInitializeRepo =
+            blueprintRepoBuilderServiceCreateRepoAndInit;
+        blueprintRepoBuilderServiceCreateRepoAndInit.mockRejectedValueOnce(
+            new Error('Unable to create repo')
+        );
         const blueprintPipelineBuilderService = mock(BlueprintPipelineBuilderService);
 
         const objectUnderTest = new CreateBlueprintRequestHandler(
@@ -259,14 +206,13 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
         reset();
         jest.clearAllMocks();
     });
-    test('should return 500 if attribute does not exist', async () => {
+    test('should return 400 if attribute does not exist', async () => {
         const testInputRequest: CreateBlueprintRequest = {
             name: 'serverlessapp',
             description: 'serverlessapp',
             patternType: 'CDK',
             email: 'AWS@', //Email address of the Blueprint owner
             owner: 'awsapjsb', //Owner of the Blueprint
-            codeRepositoryType: 'gitHub',
             attributes: {
                 dataClassification2: 'Group',
             },
@@ -284,14 +230,15 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
 
         const getAttributeByIdHandle = jest.fn();
         blueprintDBService.getAttributeById = getAttributeByIdHandle;
-        getAttributeByIdHandle.mockReturnValue(attribute);
+        getAttributeByIdHandle.mockReturnValue({});
 
-        const blueprintRepoBuilderService = mock(BlueprintRepoBuilderService);
+        const blueprintRepoBuilderService = mock(BlueprintGitHubRepoBuilderService);
         const blueprintRepoBuilderServiceHandle = jest.fn();
-        blueprintRepoBuilderService.createRepo = blueprintRepoBuilderServiceHandle;
-        blueprintRepoBuilderServiceHandle.mockReturnValue(gitHubResponse);
-        blueprintRepoBuilderService.enableBranchProtection = jest.fn();
-        blueprintRepoBuilderService.addCodeowners = jest.fn();
+        blueprintRepoBuilderService.createAndInitializeRepo =
+            blueprintRepoBuilderServiceHandle;
+        blueprintRepoBuilderServiceHandle.mockReturnValue(
+            githubCreateAndInitialiseRepoResponse
+        );
 
         const blueprintPipelineBuilderService = mock(BlueprintPipelineBuilderService);
         const blueprintPipelineBuilderServiceHandle = jest.fn();
@@ -315,17 +262,20 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
             {} as Context
         );
         expect(output).toBeDefined();
-        expect(output.statusCode).toBe(500);
+        expect(output.statusCode).toBe(400);
     });
     test('should return 409 error if empty body', async () => {
         const blueprintDBService = mock(BlueprintDBService);
         const getBlueprintByIdHandle = jest.fn();
         blueprintDBService.getBlueprintById = getBlueprintByIdHandle;
         getBlueprintByIdHandle.mockReturnValue(false);
-        const blueprintRepoBuilderService = mock(BlueprintRepoBuilderService);
+        const blueprintRepoBuilderService = mock(BlueprintGitHubRepoBuilderService);
         const blueprintRepoBuilderServiceHandle = jest.fn();
-        blueprintRepoBuilderService.createRepo = blueprintRepoBuilderServiceHandle;
-        blueprintRepoBuilderServiceHandle.mockReturnValue(gitHubResponse);
+        blueprintRepoBuilderService.createAndInitializeRepo =
+            blueprintRepoBuilderServiceHandle;
+        blueprintRepoBuilderServiceHandle.mockReturnValue(
+            githubCreateAndInitialiseRepoResponse
+        );
         const createBlueprintHandle = jest.fn();
         blueprintDBService.createBlueprint = createBlueprintHandle;
         createBlueprintHandle.mockReturnValue({});
@@ -341,7 +291,6 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
         // act
         const output = await objectUnderTest.handle(
             {
-                body: JSON.stringify(inputRequest),
                 headers: { ttl: new Date().getTime().toString() },
             } as unknown as APIGatewayProxyEvent,
             {} as Context
@@ -349,17 +298,20 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
         expect(output).toBeDefined();
         // assert
         expect(output).not.toBeUndefined();
-        expect(output.statusCode).toBe(500);
+        expect(output.statusCode).toBe(409);
     });
     test('should return 500 error if problem in invoking invoke pipeline service', async () => {
         const blueprintDBService = mock(BlueprintDBService);
         const getBlueprintByIdHandle = jest.fn();
         blueprintDBService.getBlueprintById = getBlueprintByIdHandle;
         getBlueprintByIdHandle.mockReturnValue(false);
-        const blueprintRepoBuilderService = mock(BlueprintRepoBuilderService);
+        const blueprintRepoBuilderService = mock(BlueprintGitHubRepoBuilderService);
         const blueprintRepoBuilderServiceHandle = jest.fn();
-        blueprintRepoBuilderService.createRepo = blueprintRepoBuilderServiceHandle;
-        blueprintRepoBuilderServiceHandle.mockReturnValue(gitHubResponse);
+        blueprintRepoBuilderService.createAndInitializeRepo =
+            blueprintRepoBuilderServiceHandle;
+        blueprintRepoBuilderServiceHandle.mockReturnValue(
+            githubCreateAndInitialiseRepoResponse
+        );
         const createBlueprintHandle = jest.fn();
         blueprintDBService.createBlueprint = createBlueprintHandle;
         createBlueprintHandle.mockReturnValue({});
@@ -368,9 +320,9 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
         const blueprintPipelineBuilderServiceHandle = jest.fn();
         blueprintPipelineBuilderService.invokeCodeBuildProject =
             blueprintPipelineBuilderServiceHandle;
-        blueprintPipelineBuilderServiceHandle.mockImplementation(() => {
-            new Error(`Error invokeCodeBuildProject rep`);
-        });
+        blueprintPipelineBuilderServiceHandle.mockRejectedValueOnce(
+            new Error('Error invoking codebuild')
+        );
 
         const objectUnderTest = new CreateBlueprintRequestHandler(
             new StaticLoggerFactory(),
@@ -387,14 +339,13 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
             {} as Context
         );
         expect(output).toBeDefined();
-        // assert
-        expect(output).not.toBeUndefined();
+        expect(blueprintPipelineBuilderService.invokeCodeBuildProject).toHaveBeenCalled();
         expect(output.statusCode).toBe(500);
     });
 
     test('should return 400 error if blueprint name is invalid', async () => {
         const blueprintDBService = mock(BlueprintDBService);
-        const blueprintRepoBuilderService = mock(BlueprintRepoBuilderService);
+        const blueprintRepoBuilderService = mock(BlueprintGitHubRepoBuilderService);
         const blueprintPipelineBuilderService = mock(BlueprintPipelineBuilderService);
 
         const blueprintRequest: CreateBlueprintRequest = {
@@ -403,11 +354,11 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
             patternType: 'CDK',
             email: 'AWS@', //Email address of the Blueprint owner
             owner: 'awsapjsb', //Owner of the Blueprint
-            codeRepositoryType: 'gitHub',
         };
 
         const objectUnderTest = new CreateBlueprintRequestHandler(
             new StaticLoggerFactory(),
+
             blueprintDBService,
             blueprintRepoBuilderService,
             blueprintPipelineBuilderService

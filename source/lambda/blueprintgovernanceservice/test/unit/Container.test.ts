@@ -19,6 +19,7 @@ import { container } from 'tsyringe';
 import '../../src/common/BaseContainer';
 import { setupContainer } from '../../src/Container';
 import { CreateBlueprintRequestHandler } from '../../src/handlers/CreateBlueprintRequestHandler';
+import { IBlueprintRepoBuilderService } from '../../src/service/blueprint-repo-builder/IBlueprintRepoBuilderService';
 
 const router = new Router().addRoute(
     (e) => e.httpMethod === 'POST' && e.resource == '/blueprints',
@@ -49,5 +50,28 @@ describe('test request handler registration', () => {
     test('resolve APIGateway', () => {
         process.env.PROXY_URI = 'http://Proxy';
         expect(container.resolve('APIGateway')).toBeDefined();
+    });
+
+    test('resolve to codecommit repo builder', () => {
+        process.env.PATTERN_REPO_TYPE = 'CodeCommit';
+        setupContainer(router);
+        expect(
+            (
+                container.resolve(
+                    'BlueprintRepoBuilderService'
+                ) as IBlueprintRepoBuilderService
+            ).constructor.name
+        ).toBe('BlueprintCodeCommitRepoBuilderService');
+    });
+    test('resolve to GitHub repo builder', () => {
+        process.env.PATTERN_REPO_TYPE = 'GitHub';
+        setupContainer(router);
+        expect(
+            (
+                container.resolve(
+                    'BlueprintRepoBuilderService'
+                ) as IBlueprintRepoBuilderService
+            ).constructor.name
+        ).toBe('BlueprintGitHubRepoBuilderService');
     });
 });

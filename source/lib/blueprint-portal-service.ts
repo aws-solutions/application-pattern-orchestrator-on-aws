@@ -35,7 +35,7 @@ import {
 } from './cfn-nag-suppression';
 import { AWSWafWebACL } from './infra-utils/aws-waf-web-acl';
 import { CfnWebACLAssociation } from 'aws-cdk-lib/aws-wafv2';
-import { LogLevelType, WafInfo } from './blueprint-types';
+import { GithubConfig, LogLevelType, WafInfo } from './blueprint-types';
 
 export interface BlueprintPortalServiceProps {
     cognitoUserPoolArn: string;
@@ -50,17 +50,14 @@ export interface BlueprintPortalServiceProps {
     vpc: IVpc;
     solutionId: string;
     solutionVersion: string;
-    anonymousDataUUID?: string;
     customUserAgent: string;
-    githubTokenSecretId: string;
-    githubUrl?: string;
-    githubOrganization: string;
-    codeOwners?: string;
-    proxiUri?: string;
     patternEmailTable: ITable;
-    wafInfo?: WafInfo;
     removalPolicy: RemovalPolicy;
     logLevel: LogLevelType;
+    anonymousDataUUID?: string;
+    proxiUri?: string;
+    wafInfo?: WafInfo;
+    githubConfig?: GithubConfig;
 }
 
 export class BlueprintPortalService extends Construct {
@@ -127,7 +124,22 @@ export class BlueprintPortalService extends Construct {
             }),
         ];
 
-        const lambdaEnvironmentVariables = {
+        if (!props.githubConfig) {
+            additionalPolicies.push(
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: [
+                        'codecommit:CreateRepository',
+                        'codecommit:PutFile',
+                        'codecommit:GetBranch',
+                        'codecommit:CreateCommit',
+                        'codecommit:DeleteRepository',
+                    ],
+                    resources: [`arn:aws:codecommit:${Aws.REGION}:${Aws.ACCOUNT_ID}:*`],
+                })
+            );
+        }
+        const lambdaEnvironmentVariables: Record<string, string> = {
             [envConfig.environmentVariables.RAPM_METADATA_TABLE_NAME]:
                 props.rapmMetaDataTable.tableName,
 
@@ -140,18 +152,8 @@ export class BlueprintPortalService extends Construct {
             [envConfig.environmentVariables.APPREGISTRY_UPDATER_QUEUE_URL]:
                 props.appRegistryUpdateQueue.queueUrl,
 
-            [envConfig.environmentVariables.GITHUB_TOKEN_SECRET_ID]:
-                props.githubTokenSecretId,
-
             [envConfig.environmentVariables.BLUEPRINT_CODE_BUILD_JOB_PROJECT_NAME]:
                 props.blueprintCodeBuildProjectName,
-
-            [envConfig.environmentVariables.GITHUB_URL]: props.githubUrl ?? '',
-
-            [envConfig.environmentVariables.CODEOWNERS]: props.codeOwners ?? '',
-
-            [envConfig.environmentVariables.GITHUB_ORGANIZATION]:
-                props.githubOrganization,
 
             [envConfig.environmentVariables.SOLUTION_ID]: props.solutionId,
 
@@ -162,6 +164,24 @@ export class BlueprintPortalService extends Construct {
                 props.patternEmailTable.tableName,
             [envConfig.environmentVariables.LOG_LEVEL]: props.logLevel,
         };
+
+        if (props.githubConfig) {
+            lambdaEnvironmentVariables[envConfig.environmentVariables.PATTERN_REPO_TYPE] =
+                'GitHub';
+            lambdaEnvironmentVariables[
+                envConfig.environmentVariables.GITHUB_TOKEN_SECRET_ID
+            ] = props.githubConfig.githubTokenSecretId;
+            lambdaEnvironmentVariables[envConfig.environmentVariables.GITHUB_URL] =
+                props.githubConfig.githubUrl ?? '';
+            lambdaEnvironmentVariables[envConfig.environmentVariables.CODEOWNERS] =
+                props.githubConfig.githubCodeOwners ?? '';
+            lambdaEnvironmentVariables[
+                envConfig.environmentVariables.GITHUB_ORGANIZATION
+            ] = props.githubConfig.githubOrganization;
+        } else {
+            lambdaEnvironmentVariables[envConfig.environmentVariables.PATTERN_REPO_TYPE] =
+                'CodeCommit';
+        }
 
         if (proxyUri) {
             lambdaEnvironmentVariables[envConfig.environmentVariables.PROXY_URI] =
@@ -186,7 +206,7 @@ export class BlueprintPortalService extends Construct {
             ),
             description: 'Blueprint Governance Runtime Governance Lambda',
             timeout: Duration.seconds(60),
-            runtime: Runtime.NODEJS_14_X,
+            runtime: Runtime.NODEJS_18_X,
             initialPolicy: [...additionalPolicies],
             environment: lambdaEnvironmentVariables,
             maxEventAge: Duration.seconds(60),

@@ -13,26 +13,18 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-import {
-    CfnCondition,
-    CfnParameter,
-    Fn,
-    RemovalPolicy,
-    SecretValue,
-    Stack,
-    StackProps,
-} from 'aws-cdk-lib';
+import { CfnParameter, RemovalPolicy, SecretValue, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { BlueprintAuthentication } from './blueprint-authentication';
-import { BlueprintBaseInfra } from './blueprint-base-infra';
+import { BlueprintBaseInfra, BlueprintBaseInfraProps } from './blueprint-base-infra';
 import { BlueprintBackend } from './blueprint-backend';
 import { BlueprintFrontend } from './blueprint-frontend';
 import {
-    CfnSourceCredential,
     GitHubEnterpriseSourceCredentials,
     GitHubSourceCredentials,
 } from 'aws-cdk-lib/aws-codebuild';
 import {
+    GithubConfig,
     IdentityProviderInfo,
     LogLevelType,
     PatternType,
@@ -52,17 +44,14 @@ export interface BlueprintStackProps extends StackProps {
     readonly solutionName: string;
     readonly solutionTradeMarkName: string;
     readonly solutionVersion: string;
-    readonly vpcCidr?: string;
-    readonly githubDomain?: string;
-    readonly githubDomainResolverIpAddresses?: string;
-    readonly githubTokenSecretId: string;
-    readonly githubConnectionArnSsmParam: string;
     readonly customUserAgent: string;
-    readonly cognitoDomainPrefix?: string;
-    readonly identityProviderInfo?: IdentityProviderInfo;
-    readonly wafInfo?: WafInfo;
     readonly removalPolicy: RemovalPolicy;
     readonly logLevel: LogLevelType;
+    readonly cognitoDomainPrefix?: string;
+    readonly identityProviderInfo?: IdentityProviderInfo;
+    readonly vpcCidr?: string;
+    readonly wafInfo?: WafInfo;
+    readonly githubConfig?: GithubConfig;
 }
 
 export class BlueprintStack extends Stack {
@@ -80,24 +69,6 @@ export class BlueprintStack extends Stack {
                 '^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$',
             constraintDescription: 'Admin email must be a valid email address',
             minLength: 5,
-        });
-
-        const githubUrlParam = new CfnParameter(this, 'githubUrl', {
-            type: 'String',
-            description: [
-                'The GitHub Enterprise Server URL. The URL should not have any trailing slash.',
-                'This option is only required for GitHub Enterprise Server.',
-                'This is not required for GitHub or GitHub Enterprise Cloud and should be left blank.',
-            ].join(' '),
-            default: '',
-        });
-
-        const githubOrganisationParam = new CfnParameter(this, 'githubOrganization', {
-            type: 'String',
-            description:
-                "The organization name in GitHub/GitHub Enterprise where the pattern's code repositories are created.",
-            minLength: 1,
-            allowedPattern: '^[a-zA-Z0-9-]*$',
         });
 
         const patternTypeParam = new CfnParameter(this, 'patternType', {
@@ -122,13 +93,26 @@ export class BlueprintStack extends Stack {
             allowedValues: ['Yes', 'No'],
         });
 
-        this.setupSourceCredentials(githubUrlParam, props.githubTokenSecretId);
+        if (props.githubConfig) {
+            this.setupSourceCredentials(
+                props.githubConfig.githubTokenSecretId,
+                props.githubConfig.githubUrl
+            );
+        }
 
-        const blueprintInfra = new BlueprintBaseInfra(this, 'RapmBaseInfra', {
+        const blueprintBaseInfraProps: BlueprintBaseInfraProps = {
             vpcCidr: props.vpcCidr,
-            githubDomain: props.githubDomain,
-            githubDomainResolverIpAddresses: props.githubDomainResolverIpAddresses,
-        });
+        };
+        if (props.githubConfig) {
+            blueprintBaseInfraProps.githubDomain = props.githubConfig.githubDomain;
+            blueprintBaseInfraProps.githubDomainResolverIpAddresses =
+                props.githubConfig.githubDomainResolverIpAddresses;
+        }
+        const blueprintInfra = new BlueprintBaseInfra(
+            this,
+            'RapmBaseInfra',
+            blueprintBaseInfraProps
+        );
 
         const anonymousDataUUID = this.createOperationalMetrics(
             sendAnonymousDataParam.valueAsString,
@@ -175,10 +159,7 @@ export class BlueprintStack extends Stack {
             solutionVersion: props.solutionVersion,
             cognitoUserPoolArn: blueprintAuth.userPoolArn,
             customUserAgent: props.customUserAgent,
-            githubTokenSecretId: props.githubTokenSecretId,
-            githubConnectionArnSsmParam: props.githubConnectionArnSsmParam,
-            githubUrl: githubUrlParam.valueAsString,
-            githubOrganization: githubOrganisationParam.valueAsString,
+            githubConfig: props.githubConfig,
             patternType: patternTypeParam.valueAsString as PatternType,
             anonymousDataUUID,
             patternEmailTable,
@@ -240,42 +221,20 @@ export class BlueprintStack extends Stack {
     }
 
     private setupSourceCredentials(
-        githubUrlParam: CfnParameter,
-        githubTokenSecretId: string
+        githubTokenSecretId: string,
+        githubUrl?: string
     ): void {
-        const githubCloudCondition = new CfnCondition(this, 'GitHubCloudCondition', {
-            expression: Fn.conditionEquals(githubUrlParam, ''),
-        });
-
-        const githubEnterpriseCondition = new CfnCondition(
-            this,
-            'GithubEnterpriseCondition',
-            {
-                expression: Fn.conditionNot(githubCloudCondition),
-            }
-        );
-
-        const githubEnterpriseSourceCredentials = new GitHubEnterpriseSourceCredentials(
-            this,
-            'GitHubEnterpriseSourceCredentials',
-            {
-                accessToken: SecretValue.secretsManager(githubTokenSecretId),
-            }
-        );
-        (
-            githubEnterpriseSourceCredentials.node.defaultChild as CfnSourceCredential
-        ).cfnOptions.condition = githubEnterpriseCondition;
-
-        const githubSourceCredentials = new GitHubSourceCredentials(
-            this,
-            'GitHubSourceCredentials',
-            {
-                accessToken: SecretValue.secretsManager(githubTokenSecretId),
-            }
-        );
-        (
-            githubSourceCredentials.node.defaultChild as CfnSourceCredential
-        ).cfnOptions.condition = githubCloudCondition;
+        githubUrl
+            ? new GitHubEnterpriseSourceCredentials(
+                  this,
+                  'GitHubEnterpriseSourceCredentials',
+                  {
+                      accessToken: SecretValue.secretsManager(githubTokenSecretId),
+                  }
+              )
+            : new GitHubSourceCredentials(this, 'GitHubSourceCredentials', {
+                  accessToken: SecretValue.secretsManager(githubTokenSecretId),
+              });
     }
 
     private createOperationalMetrics(

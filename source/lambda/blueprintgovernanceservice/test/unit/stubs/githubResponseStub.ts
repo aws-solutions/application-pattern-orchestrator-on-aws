@@ -14,7 +14,15 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-export const gitHubResponseStub = {
+import { BlueprintCodeRepoDetails } from '../../../src/types/BlueprintType';
+
+export const githubCreateAndInitialiseRepoResponse: BlueprintCodeRepoDetails = {
+    patternRepoURL: 'git://github.com/awsapjsb/serverlessapp2.git',
+    repoName: 'serverlessapp2',
+    branchName: 'main',
+    repoOwner: 'awsapjsb',
+}
+export const githubResponseStub = {
     status: 201,
     url: 'https://api.github.com/user/repos',
     headers: {

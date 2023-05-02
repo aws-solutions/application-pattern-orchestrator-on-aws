@@ -36,7 +36,7 @@ export interface PatternMetadata {
     updatedTimestamp: string;
     createdTimestamp: string;
     infrastructureStackStatus?: string;
-    patternRepoURL?: string;
+    patternRepoURL: string;
     codeRepository?: PatternCodeRepository;
     lastCommitId?: string;
     attributes?: Record<string, string>;

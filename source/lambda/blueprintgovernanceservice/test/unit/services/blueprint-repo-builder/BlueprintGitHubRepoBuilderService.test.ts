@@ -19,11 +19,12 @@
 import 'reflect-metadata';
 import { mock, reset } from 'ts-mockito';
 import { when } from 'jest-when';
-import { BlueprintRepoBuilderService } from '../../../src/service/BlueprintRepoBuilderService';
-import { DependencyConfigurationProvider } from '../../../src/common/providers/DependencyConfigurationProvider';
-import { StaticLoggerFactory } from '../../../src/common/logging';
-import BlueprintError from '../../../src/common/BlueprintError';
+import { DependencyConfigurationProvider } from '../../../../src/common/providers/DependencyConfigurationProvider';
+import { StaticLoggerFactory } from '../../../../src/common/logging';
+import BlueprintError from '../../../../src/common/BlueprintError';
 import path from 'path';
+import { BlueprintGitHubRepoBuilderService } from '../../../../src/service/blueprint-repo-builder/BlueprintGitHubRepoBuilderService';
+import { githubResponseStub } from '../../stubs/githubResponseStub';
 
 const mockRequestFunc = jest.fn();
 jest.mock('@octokit/rest', () => ({
@@ -125,7 +126,7 @@ const fixtureGitTreeArray = [
     },
 ];
 
-describe('test BlueprintRepoBuilderService', () => {
+describe('test BlueprintGitHubRepoBuilderService', () => {
     const dependencyConfigurationProvider = mock(DependencyConfigurationProvider);
     const dependencyConfigurationProviderHandle = jest.fn();
     dependencyConfigurationProvider.getBlueprintServiceRepoCredentials =
@@ -143,36 +144,37 @@ describe('test BlueprintRepoBuilderService', () => {
     beforeEach(() => {
         reset();
         mockRequestFunc.mockClear();
+        mockRequestFunc.mockReset();
     });
 
     test('test createRepo error flow', async () => {
         mockRequestFunc.mockRejectedValueOnce('test err in creating repo');
-        const objectUnderTest = new BlueprintRepoBuilderService(
+        const objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
             dependencyConfigurationProvider
         );
-        await expect(objectUnderTest.createRepo('repo')).rejects.toEqual(
-            new BlueprintError(`Error in creating a repo`, 500)
-        );
+        await expect(
+            objectUnderTest.createAndInitializeRepo('repo', 'CFN')
+        ).rejects.toEqual(new BlueprintError(`Error in creating a repo`, 500));
     });
 
     test('github url having trailing slash should be removed', () => {
         process.env.GITHUB_URL = 'http://testurl/';
-        let objectUnderTest = new BlueprintRepoBuilderService(
+        let objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
             dependencyConfigurationProvider
         );
         expect(objectUnderTest.apiBaseUrl).toBe('http://testurl/api/v3');
 
         process.env.GITHUB_URL = 'http://testgithuburl\\';
-        objectUnderTest = new BlueprintRepoBuilderService(
+        objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
             dependencyConfigurationProvider
         );
         expect(objectUnderTest.apiBaseUrl).toBe('http://testgithuburl/api/v3');
 
         process.env.GITHUB_URL = 'http://testgithuburl';
-        objectUnderTest = new BlueprintRepoBuilderService(
+        objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
             dependencyConfigurationProvider
         );
@@ -180,11 +182,11 @@ describe('test BlueprintRepoBuilderService', () => {
     });
 
     test('test createRepo', async () => {
-        const objectUnderTest = new BlueprintRepoBuilderService(
+        const objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
             dependencyConfigurationProvider
         );
-        mockRequestFunc.mockResolvedValue(true);
+        mockRequestFunc.mockResolvedValue(githubResponseStub);
         await objectUnderTest.createRepo(repo.name);
         expect(mockRequestFunc).toHaveBeenCalledWith(
             `POST /orgs/${repo.organization}/repos`,
@@ -199,7 +201,7 @@ describe('test BlueprintRepoBuilderService', () => {
     });
 
     test('test createGitTreeArray', async () => {
-        const objectUnderTest = new BlueprintRepoBuilderService(
+        const objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
             dependencyConfigurationProvider
         );
@@ -218,7 +220,7 @@ describe('test BlueprintRepoBuilderService', () => {
             repo.name,
             path.resolve(
                 __dirname,
-                `../../../${ROOT_INITIAL_REPO_DIR}/${'cdk'.toLowerCase()}`
+                `../../../../${ROOT_INITIAL_REPO_DIR}/${'cdk'.toLowerCase()}`
             ),
             branch
         );
@@ -237,7 +239,7 @@ describe('test BlueprintRepoBuilderService', () => {
     });
 
     test('test getGitTree', async () => {
-        const objectUnderTest = new BlueprintRepoBuilderService(
+        const objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
             dependencyConfigurationProvider
         );
@@ -256,7 +258,7 @@ describe('test BlueprintRepoBuilderService', () => {
             repo.name,
             path.resolve(
                 __dirname,
-                `../../../${ROOT_INITIAL_REPO_DIR}/${'cdk'.toLowerCase()}`
+                `../../../../${ROOT_INITIAL_REPO_DIR}/${'cdk'.toLowerCase()}`
             ),
             'latest-sha-test',
             branch
@@ -273,7 +275,7 @@ describe('test BlueprintRepoBuilderService', () => {
     });
 
     test('test initialiseRepo', async () => {
-        const objectUnderTest = new BlueprintRepoBuilderService(
+        const objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
             dependencyConfigurationProvider
         );
@@ -301,7 +303,7 @@ describe('test BlueprintRepoBuilderService', () => {
                 sha: 'sha-xyz',
             },
         });
-        await objectUnderTest.initializeRepo(branch, repo.name, 'CDK');
+        await objectUnderTest.initialiseRepo(branch, repo.name, 'CDK');
         expect(mockRequestFunc).toHaveBeenLastCalledWith(
             `POST /repos/${repo.organization}/${repo.name}/git/refs/heads/${branch}`,
             {
@@ -313,11 +315,12 @@ describe('test BlueprintRepoBuilderService', () => {
     });
 
     test('test enableBranchProtection', async () => {
-        const objectUnderTest = new BlueprintRepoBuilderService(
+        process.env.GITHUB_ORGANIZATION = repo.owner;
+        const objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
             dependencyConfigurationProvider
         );
-        await objectUnderTest.enableBranchProtection(repo.owner, repo.name, branch);
+        await objectUnderTest.enableBranchProtection(repo.name, branch);
         expect(mockRequestFunc).toBeCalledWith(
             `PUT /repos/${repo.owner}/${repo.name}/branches/${branch}/protection`,
             {
@@ -335,11 +338,12 @@ describe('test BlueprintRepoBuilderService', () => {
     });
 
     test('test addCodeowners', async () => {
-        const objectUnderTest = new BlueprintRepoBuilderService(
+        process.env.GITHUB_ORGANIZATION = repo.owner;
+        const objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
             dependencyConfigurationProvider
         );
-        await objectUnderTest.addCodeowners(repo.owner, repo.name, ['testuser1']);
+        await objectUnderTest.addCodeowners(repo.name, ['testuser1']);
         expect(mockRequestFunc).toBeCalledWith(
             `PUT /repos/${repo.owner}/${repo.name}/contents/CODEOWNERS`,
             {

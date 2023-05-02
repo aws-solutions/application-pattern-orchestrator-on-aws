@@ -26,6 +26,7 @@ import {
 } from './cfn-nag-suppression';
 import { LogLevelType, PatternType } from './blueprint-types';
 import { NagSuppressions } from 'cdk-nag';
+import { Runtime } from 'aws-cdk-lib/aws-lambda';
 
 export interface OperationalMetricsCollectionProps {
     awsSolutionId: string;
@@ -62,6 +63,7 @@ export class OperationalMetricsCollection extends Construct {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
                 LOG_LEVEL: props.logLevel,
             },
+            runtime: Runtime.NODEJS_18_X,
         });
         NagSuppressions.addResourceSuppressions(
             lambda,
@@ -69,10 +71,6 @@ export class OperationalMetricsCollection extends Construct {
                 {
                     id: 'AwsSolutions-IAM4',
                     reason: 'Uses service role - AWSLambdaVPCAccessExecutionRole and AWSLambdaBasicExecutionRole',
-                },
-                {
-                    id: 'AwsSolutions-L1',
-                    reason: 'Node 14 is still supported version and solution relies on this version.',
                 },
             ],
             true
@@ -118,7 +116,7 @@ export class OperationalMetricsCollection extends Construct {
                 },
                 {
                     id: 'AwsSolutions-L1',
-                    reason: 'Node 14 is still supported version and solution relies on this version.',
+                    reason: 'This lambda runtime is implicitly selected by AWS CDK',
                 },
             ],
             true
