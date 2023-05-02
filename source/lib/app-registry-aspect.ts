@@ -80,18 +80,16 @@ export class AppRegistry extends Construct implements cdk.IAspect {
     }
 
     private createAttributeGroup(application: appRegistry.Application): void {
-        application.associateAttributeGroup(
-            new appRegistry.AttributeGroup(this, 'AppAttributes', {
-                attributeGroupName: cdk.Aws.STACK_NAME,
-                description: 'Attributes for Solutions Metadata',
-                attributes: {
-                    applicationType: this.props.applicationType,
-                    version: this.props.solutionVersion,
-                    solutionID: this.props.solutionId,
-                    solutionName: this.props.solutionName,
-                },
-            })
-        );
+        application.addAttributeGroup('AppAttributes', {
+            attributeGroupName: cdk.Aws.STACK_NAME,
+            description: 'Attributes for Solutions Metadata',
+            attributes: {
+                applicationType: this.props.applicationType,
+                version: this.props.solutionVersion,
+                solutionID: this.props.solutionId,
+                solutionName: this.props.solutionName,
+            },
+        });
     }
 
     private createAppForAppInsights(application: appRegistry.Application): void {
@@ -105,6 +103,6 @@ export class AppRegistry extends Construct implements cdk.IAspect {
             autoConfigurationEnabled: true,
             cweMonitorEnabled: true,
             opsCenterEnabled: true,
-        }).addDependsOn(application.node.defaultChild as cdk.CfnResource);
+        }).addDependency(application.node.defaultChild as cdk.CfnResource);
     }
 }

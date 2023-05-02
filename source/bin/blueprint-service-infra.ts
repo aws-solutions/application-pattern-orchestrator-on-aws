@@ -23,7 +23,7 @@ import {
 } from '../lib/cfn-nag-suppression';
 import { BlueprintStack } from '../lib/blueprint-stack';
 import { AwsSolutionsChecks, NagSuppressions } from 'cdk-nag';
-import { WafInfo, LogLevelType } from '../lib/blueprint-types';
+import { WafInfo, LogLevelType, GithubConfig } from '../lib/blueprint-types';
 import { AppRegistry } from '../lib/app-registry-aspect';
 
 const app = new App();
@@ -38,15 +38,6 @@ const solutionTradeMarkName =
 const customUserAgent = `AwsSolution/${solutionId}/${solutionVersion}`;
 
 const vpcCidr = app.node.tryGetContext('vpcCidr');
-const githubDomain = app.node.tryGetContext('githubDomain');
-const githubDomainResolverIpAddresses = app.node.tryGetContext(
-    'githubDomainResolverIpAddresses'
-);
-
-const githubTokenSecretId =
-    app.node.tryGetContext('githubTokenSecretId') ?? 'githubTokenSecretId';
-const githubConnectionArnSsmParam =
-    app.node.tryGetContext('githubConnectionArnSsmParam') ?? 'githubConnectionArn';
 
 const cognitoDomainPrefix = app.node.tryGetContext('cognitoDomainPrefix');
 const identityProviderInfo = app.node.tryGetContext('identityProviderInfo');
@@ -56,6 +47,16 @@ const removalPolicy = app.node.tryGetContext('retainData')
     : RemovalPolicy.DESTROY;
 // Default log level is info if not specified
 const logLevel: LogLevelType = app.node.tryGetContext('logLevel') || 'info';
+const githubConfig: GithubConfig | undefined = app.node.tryGetContext('githubConfig');
+if (githubConfig && !githubConfig.githubTokenSecretId) {
+    githubConfig.githubTokenSecretId = 'githubTokenSecretId';
+}
+if (githubConfig && !githubConfig.githubConnectionArnSsmParam) {
+    githubConfig.githubConnectionArnSsmParam = 'githubConnectionArn';
+}
+if (githubConfig && !githubConfig.githubOrganization) {
+    throw new Error('githubConfig is missing GitHubOrganization');
+}
 
 const stackName = 'ApoStack';
 
@@ -69,10 +70,7 @@ const blueprintStack = new BlueprintStack(app, {
     solutionTradeMarkName,
     solutionVersion,
     vpcCidr,
-    githubTokenSecretId,
-    githubConnectionArnSsmParam,
-    githubDomain,
-    githubDomainResolverIpAddresses,
+    githubConfig,
     customUserAgent,
     cognitoDomainPrefix,
     identityProviderInfo,

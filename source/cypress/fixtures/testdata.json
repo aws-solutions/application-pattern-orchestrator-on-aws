@@ -1,0 +1,17 @@
+{
+  "cfnPatternName": "cypress-test-cfn",
+  "cdkPatternName": "cypress-test-cdk",
+  "patternDescription": "Test desription",
+  "cfnTestAttributeKey": "CypressCfnTestSecurityLevel",
+  "cfnTestAttributeValue": "CypressCfnTestMedium",
+  "cdkTestAttributeKey": "CypressCdkTestSecurityLevel",
+  "cdkTestAttributeValue": "CypressCdkTestMedium",
+  "formValidationTestAttributeKey": "CypressFormValidationTestAttrKey",
+  "formValidationTestAttributeValue": "CypressFormValidationTestAttrVal",
+  "testAttributeDescription": "Cypress Attribute Description",
+  "newAttributeKey": "CypressDummyAttributeKey",
+  "newAttributeValue": "CypressDummyAttributeValue",
+  "newAttributeDescription": "CypressDummyAttributeDescription",
+  "newAttributeMetaKey": "CypressDummyAttributeMetaKey",
+  "newAttributeMetaValue": "CypressDummyAttributeMetaValue"
+}

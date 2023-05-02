@@ -15,6 +15,8 @@
 */
 /* eslint-disable @typescript-eslint/naming-convention */
 import {
+    Arn,
+    ArnFormat,
     Aspects,
     aws_lambda_nodejs,
     CustomResource,
@@ -23,7 +25,13 @@ import {
     Stack,
     StackProps,
 } from 'aws-cdk-lib';
-import { BuildSpec, LinuxBuildImage, Project, Source } from 'aws-cdk-lib/aws-codebuild';
+import {
+    BuildSpec,
+    LinuxBuildImage,
+    Project,
+    ProjectProps,
+    Source,
+} from 'aws-cdk-lib/aws-codebuild';
 import { Construct } from 'constructs';
 import {
     ISecurityGroup,
@@ -36,16 +44,25 @@ import {
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import * as path from 'path';
-import { BlueprintPublicationPipelineConstruct } from './blueprint-publication-pipeline-construct';
+import {
+    BlueprintPublicationPipelineConstruct,
+    BlueprintPublicationPipelineConstructProps,
+} from './blueprint-publication-pipeline-construct';
 import { generateBuildStageBuildspec } from './buildspecs';
+import { Repository, RepositoryNotificationEvents } from 'aws-cdk-lib/aws-codecommit';
+import {
+    BlueprintInfraSharedConfig,
+    BlueprintType,
+    GithubConfigPatternPublishPipeline,
+    LogLevelType,
+    PatternRepoType,
+} from './blueprint-infrastructure-types';
 import {
     addCfnNagSuppression,
     CfnNagResourcePathEndingWithSuppressionAspect,
 } from './cfn-nag-suppression';
-
-export type BlueprintType = 'CDK' | 'CFN';
-
-export type LogLevelType = 'error' | 'warn' | 'info' | 'verbose' | 'debug' | 'silly';
+import { DetailType } from 'aws-cdk-lib/aws-codestarnotifications';
+import { Topic } from 'aws-cdk-lib/aws-sns';
 
 export interface BlueprintInfrastructureStackProps extends StackProps {
     blueprintId: string;
@@ -55,22 +72,18 @@ export interface BlueprintInfrastructureStackProps extends StackProps {
      */
     blueprintInfrastructureSharedConfigJson: string;
     /**
-     * Github repository owner
-     */
-    githubRepositoryOwner: string;
-    /**
      * Github repository name
      */
-    githubRepositoryName: string;
+    repositoryName: string;
     /**
      * Name of the main branch that should trigger a new blueprint version on push
      */
-    githubRepositoryMainBranchName: string;
+    repositoryMainBranchName: string;
 
     /**
-     * CodeStar connection ARN
+     * GitHub specific config
      */
-    githubConnectionArn: string;
+    githubConfig?: GithubConfigPatternPublishPipeline;
 }
 
 export class BlueprintInfrastructureStack extends Stack {
@@ -89,8 +102,9 @@ export class BlueprintInfrastructureStack extends Stack {
     ) {
         super(scope, id, props);
 
-        console.log(props.blueprintInfrastructureSharedConfigJson);
-        const sharedConfig = JSON.parse(props.blueprintInfrastructureSharedConfigJson);
+        const sharedConfig: BlueprintInfraSharedConfig = JSON.parse(
+            props.blueprintInfrastructureSharedConfigJson
+        );
 
         // Lookup the VPC where the compute resources will get created
         const vpc = Vpc.fromLookup(this, 'BlueprintInfrastructureVPC', {
@@ -104,54 +118,89 @@ export class BlueprintInfrastructureStack extends Stack {
         );
 
         // Generate the buildspec for the automated security check
+        const patternRepoType: PatternRepoType = props.githubConfig
+            ? 'GitHub'
+            : 'CodeCommit';
         const buildSpecForSecurityCheckTriggerTypePr = generateBuildStageBuildspec(
             props.blueprintType,
             'PR',
+            patternRepoType,
             sharedConfig.proxyUri,
-            sharedConfig.githubTokenSecretId,
-            sharedConfig.githubUrl,
-            props.githubRepositoryName,
-            props.githubRepositoryOwner
+            props.githubConfig
+                ? sharedConfig.githubConfig?.githubTokenSecretId
+                : undefined,
+            props.githubConfig ? sharedConfig.githubConfig?.githubUrl : undefined,
+            props.repositoryName,
+            props.githubConfig ? props.githubConfig.githubOrganization : undefined
         );
 
         // Generate the buildspec for the build stage in the publishing pipeline
         const buildSpecForSecurityCheckTriggerTypePipeline = generateBuildStageBuildspec(
             props.blueprintType,
             'Pipeline',
+            patternRepoType,
             sharedConfig.proxyUri
         );
 
-        // Create the codebuild project that will automatically run checks on Github PRs
-        const checksProject = new Project(this, 'BlueprintChecks', {
+        // Create the codebuild project that will automatically run checks on source repo PRs
+        const projectProps: ProjectProps = {
             projectName: `BlueprintChecks_${props.blueprintId}`,
             description: `Automated security checks for blueprint ${props.blueprintId}`,
-            source: sharedConfig.githubUrl
-                ? Source.gitHubEnterprise({
-                      httpsCloneUrl: `${sharedConfig.githubUrl}/${props.githubRepositoryOwner}/${props.githubRepositoryName}`,
-                  })
-                : Source.gitHub({
-                      owner: props.githubRepositoryOwner,
-                      repo: props.githubRepositoryName,
-                  }),
             environment: {
-                buildImage: LinuxBuildImage.STANDARD_5_0,
+                buildImage: LinuxBuildImage.STANDARD_7_0,
             },
+            source: props.githubConfig
+                ? sharedConfig.githubConfig?.githubUrl
+                    ? Source.gitHubEnterprise({
+                          httpsCloneUrl: `${sharedConfig.githubConfig.githubUrl}/${props.githubConfig.githubOrganization}/${props.repositoryName}`,
+                      })
+                    : Source.gitHub({
+                          owner: props.githubConfig.githubOrganization,
+                          repo: props.repositoryName,
+                      })
+                : Source.codeCommit({
+                      repository: Repository.fromRepositoryName(
+                          this,
+                          `CodeCommitRepo${props.repositoryName}`,
+                          props.repositoryName
+                      ),
+                  }),
             buildSpec: BuildSpec.fromObject(buildSpecForSecurityCheckTriggerTypePr),
             vpc,
             subnetSelection: {
                 subnetType: SubnetType.PRIVATE_WITH_EGRESS,
             },
             securityGroups: [securityGroup],
-        });
-        checksProject.addToRolePolicy(
-            new PolicyStatement({
-                effect: Effect.ALLOW,
-                resources: [
-                    `arn:aws:secretsmanager:${this.region}:${this.account}:secret:${sharedConfig.githubTokenSecretId}*`,
-                ],
-                actions: ['secretsmanager:GetSecretValue'],
-            })
-        );
+        };
+
+        const checksProject = new Project(this, 'BlueprintChecks', projectProps);
+        if (props.githubConfig) {
+            checksProject.addToRolePolicy(
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    resources: [
+                        `arn:aws:secretsmanager:${this.region}:${this.account}:secret:${sharedConfig.githubConfig?.githubTokenSecretId}*`,
+                    ],
+                    actions: ['secretsmanager:GetSecretValue'],
+                })
+            );
+        } else {
+            checksProject.addToRolePolicy(
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    resources: [
+                        `arn:aws:codecommit:${this.region}:${this.account}:${props.repositoryName}`,
+                    ],
+                    actions: [
+                        'codecommit:PostCommentForPullRequest',
+                        'codecommit:CreatePullRequestApprovalRule',
+                        'codecommit:GetPullRequest',
+                        'codecommit:UpdatePullRequestApprovalState',
+                    ],
+                })
+            );
+        }
+
         addCfnNagSuppression(
             checksProject,
             [
@@ -179,39 +228,78 @@ export class BlueprintInfrastructureStack extends Stack {
             ])
         );
 
-        // Create the webhook to trigger the codebuild checks project everytime a new commit is pushed to the blueprint repository
-        this.createGithubWebhook({
-            project: checksProject,
-            vpc,
-            vpcsubnet: {
-                subnetType: SubnetType.PRIVATE_WITH_EGRESS,
-            },
-            securityGroup,
-            githubUrl: sharedConfig.githubUrl,
-            githubTokenSecretId: sharedConfig.githubTokenSecretId,
-            githubRepositoryOwner: props.githubRepositoryOwner,
-            githubRepositoryName: props.githubRepositoryName,
-            customUserAgent: sharedConfig.customUserAgent,
-            logLevel: sharedConfig.logLevel,
-        });
-
-        // Create the publication pipeline for the blueprint
-        const publicationPipelineConstruct = new BlueprintPublicationPipelineConstruct(
-            this,
-            'BlueprintPublicationPipeline',
+        const blueprintPublicationPipelineConstructProps: BlueprintPublicationPipelineConstructProps =
             {
                 vpc,
                 securityGroup,
                 blueprintId: props.blueprintId,
                 blueprintType: props.blueprintType,
-                releaseBranchName: props.githubRepositoryMainBranchName,
-                githubRepositoryName: props.githubRepositoryName,
-                githubRepositoryOwner: props.githubRepositoryOwner,
-                githubRepositoryMainBranchName: props.githubRepositoryMainBranchName,
-                githubConnectionArn: props.githubConnectionArn,
                 buildSpec: buildSpecForSecurityCheckTriggerTypePipeline,
                 sharedConfig,
-            }
+                releaseBranchName: props.repositoryMainBranchName,
+                repositoryName: props.repositoryName,
+                repositoryMainBranchName: props.repositoryMainBranchName,
+            };
+
+        if (props.githubConfig && sharedConfig.githubConfig) {
+            // Create the GitHub webhook to trigger the codebuild checks project everytime a new commit is pushed to the blueprint repository
+            this.createGithubWebhook({
+                project: checksProject,
+                vpc,
+                vpcsubnet: {
+                    subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+                },
+                securityGroup,
+                githubUrl: sharedConfig.githubConfig.githubUrl,
+                githubTokenSecretId: sharedConfig.githubConfig.githubTokenSecretId,
+                githubRepositoryOwner: props.githubConfig.githubOrganization,
+                githubRepositoryName: props.repositoryName,
+                customUserAgent: sharedConfig.customUserAgent,
+                logLevel: sharedConfig.logLevel,
+            });
+            blueprintPublicationPipelineConstructProps.githubConfig = {
+                githubConnectionArn: props.githubConfig.githubConnectionArn,
+                githubOrganization: props.githubConfig.githubOrganization,
+            };
+        } else if (sharedConfig.codeCommitConfig) {
+            const codeCommitPatternRepo = Repository.fromRepositoryName(
+                this,
+                `${props.repositoryName}`,
+                props.repositoryName
+            );
+            blueprintPublicationPipelineConstructProps.codeCommitPipelineConfig = {
+                patternRepository: codeCommitPatternRepo,
+            };
+
+            const codeCommitPatternRepoNotificationTopic = Topic.fromTopicArn(
+                this,
+                `codeCommitPatternRepoNotificationTopic-${codeCommitPatternRepo.repositoryName}`,
+                sharedConfig.codeCommitConfig.patternRepoNotificationTopicArn
+            );
+            const synthTimeRegion = Arn.split(
+                sharedConfig.codeCommitConfig.patternRepoNotificationTopicArn,
+                ArnFormat.NO_RESOURCE_NAME
+            ).region;
+            codeCommitPatternRepo.notifyOn(
+                `codecommitPatternRepoNotification-${synthTimeRegion}-${codeCommitPatternRepo.repositoryName}`,
+                codeCommitPatternRepoNotificationTopic,
+                {
+                    events: [
+                        RepositoryNotificationEvents.PULL_REQUEST_CREATED,
+                        RepositoryNotificationEvents.PULL_REQUEST_SOURCE_UPDATED,
+                    ],
+                    detailType: DetailType.BASIC,
+                }
+            );
+        } else {
+            throw new Error('Neither GitHub nor CodeCommit config supplied');
+        }
+
+        // Create the publication pipeline for the blueprint
+        const publicationPipelineConstruct = new BlueprintPublicationPipelineConstruct(
+            this,
+            'BlueprintPublicationPipeline',
+            blueprintPublicationPipelineConstructProps
         );
         this.publicationPipelineCfnNagSuppressions(publicationPipelineConstruct);
     }
@@ -266,18 +354,18 @@ export class BlueprintInfrastructureStack extends Stack {
         vpc: IVpc;
         vpcsubnet: SubnetSelection;
         securityGroup: ISecurityGroup;
-        githubUrl: string;
         githubTokenSecretId: string;
         githubRepositoryOwner: string;
         githubRepositoryName: string;
         customUserAgent: string;
         logLevel: LogLevelType;
+        githubUrl?: string;
     }): void {
         const createGithubWebhookFunction = new aws_lambda_nodejs.NodejsFunction(
             this,
             'CreateGithubWebhookFunction',
             {
-                runtime: Runtime.NODEJS_14_X,
+                runtime: Runtime.NODEJS_18_X,
                 entry: path.join(__dirname, '../lambda/github/createWebhook.ts'),
                 handler: 'handler',
                 timeout: Duration.seconds(30),
@@ -286,7 +374,7 @@ export class BlueprintInfrastructureStack extends Stack {
                 securityGroups: [params.securityGroup],
                 environment: {
                     GITHUB_TOKEN_SECRET_ID: params.githubTokenSecretId,
-                    GITHUB_URL: params.githubUrl,
+                    GITHUB_URL: params.githubUrl ?? '',
                     GITHUB_REPO_OWNER: params.githubRepositoryOwner,
                     GITHUB_REPO_NAME: params.githubRepositoryName,
                     SOLUTION_USER_AGENT: params.customUserAgent,

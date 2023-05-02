@@ -1,0 +1,21 @@
+{
+  "name": "@cypress-cdk/compliant-s3-bucket",
+  "version": "1.0.0",
+  "description": "Compliant S3 bucket",
+  "license": "ISC",
+  "main": "lib/compliant-s3-bucket.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "test": "jest --silent --passWithNoTests"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.32.0",
+    "constructs": "^10.1.46"
+  }
+}

@@ -15,21 +15,23 @@
 */
 /* eslint-disable @typescript-eslint/naming-convention */
 import { inject, injectable } from 'tsyringe';
-import { LoggerFactory } from '../common/logging';
+import { LoggerFactory } from '../../common/logging';
 import { Logger } from 'aws-xray-sdk';
-import BlueprintError from '../common/BlueprintError';
-import { PatternType } from '../common/common-types';
-import { GitTree } from '../types/BlueprintType';
+import BlueprintError from '../../common/BlueprintError';
+import { PatternType } from '../../common/common-types';
+import { BlueprintCodeRepoDetails, GitTree } from '../../types/BlueprintType';
 import * as handlebars from 'handlebars';
 import * as path from 'path';
 import * as fs from 'fs';
 import { Octokit } from '@octokit/rest';
-import { DependencyConfigurationProvider } from '../common/providers/DependencyConfigurationProvider';
-
-const ROOT_INITIAL_REPO_DIR = 'initialRepoTemplates';
+import { DependencyConfigurationProvider } from '../../common/providers/DependencyConfigurationProvider';
+import {
+    IBlueprintRepoBuilderService,
+    blueprintRepoBuilderServiceConstants,
+} from './IBlueprintRepoBuilderService';
 
 @injectable()
-export class BlueprintRepoBuilderService {
+export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderService {
     private readonly logger: Logger;
     private readonly org: string;
     public readonly apiBaseUrl: string;
@@ -47,13 +49,28 @@ export class BlueprintRepoBuilderService {
         private readonly dependencyConfigurationProvider: DependencyConfigurationProvider
     ) {
         this.logger = loggerFactory.getLogger('BlueprintRepoBuilderService');
-        const gitHubUrl = process.env.GITHUB_URL;
+        const githubUrl = process.env.GITHUB_URL;
         // remove any trailing slash from the GitHub url
-        this.apiBaseUrl = gitHubUrl
-            ? `${gitHubUrl.replace(/[/\\]+$/, '')}/api/v3`
+        this.apiBaseUrl = githubUrl
+            ? `${githubUrl.replace(/[/\\]+$/, '')}/api/v3`
             : 'https://api.github.com';
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.org = process.env.GITHUB_ORGANIZATION!;
+    }
+
+    public async deleteRepo(repoName: string): Promise<void> {
+        this.logger.debug(`Deleting the repo ${repoName}`);
+        try {
+            const octokit = await this.getOctokit();
+            await octokit.request(`DELETE /repos/${this.org}/${repoName}`, {
+                accept: 'application/vnd.github.v3+json',
+            });
+        } catch (e) {
+            this.logger.error(
+                `Unable to delete the repo: ${repoName}: ${JSON.stringify(e, null, 4)}`
+            );
+            throw e;
+        }
     }
 
     /**
@@ -77,24 +94,77 @@ export class BlueprintRepoBuilderService {
         });
     }
 
+    public async createAndInitializeRepo(
+        repoName: string,
+        patternType: PatternType
+    ): Promise<BlueprintCodeRepoDetails> {
+        // Create pattern repo
+        const blueprintRepoDetails = await this.createRepo(repoName);
+
+        try {
+            // Initialize patten repo
+            await this.initialiseRepo(
+                blueprintRepoDetails.branchName,
+                blueprintRepoDetails.repoName,
+                patternType
+            );
+
+            // Enable branch protection on main branch
+            await this.enableBranchProtection(repoName, blueprintRepoDetails.branchName);
+
+            // Add codeowners if any
+            const codeOwners = process.env.CODEOWNERS
+                ? process.env.CODEOWNERS.split(',')
+                : [];
+            if (codeOwners.length > 0) {
+                await this.addCodeowners(repoName, codeOwners);
+            }
+        } catch (e) {
+            this.logger.error(
+                `Error initialising repo: ${repoName}: ${JSON.stringify(e, null, 4)}`
+            );
+            // rollback the repo creation
+            await this.deleteRepo(repoName);
+            // eslint-disable-next-line @typescript-eslint/no-throw-literal
+            throw new BlueprintError(`Error initialising repo: ${repoName}`, 500);
+        }
+
+        return blueprintRepoDetails;
+    }
+
     /**
      * Creates repo
      * @param reponame
      * @returns repo
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public async createRepo(reponame: string): Promise<any> {
+    public async createRepo(reponame: string): Promise<BlueprintCodeRepoDetails> {
         try {
             const octokit = await this.getOctokit();
             this.logger.info(`org:${this.org}`);
             if (this.org) {
-                return await octokit.request(`POST /orgs/${this.org}/repos`, {
-                    accept: 'application/vnd.github.v3+json',
-                    name: reponame,
-                    private: true,
-                    is_template: true,
-                    auto_init: true,
-                });
+                const createRepoResponse = await octokit.request(
+                    `POST /orgs/${this.org}/repos`,
+                    {
+                        accept: 'application/vnd.github.v3+json',
+                        name: reponame,
+                        private: true,
+                        is_template: true,
+                        auto_init: true,
+                    }
+                );
+                if (createRepoResponse.status == 201) {
+                    return {
+                        patternRepoURL: createRepoResponse.data.git_url,
+                        repoName: createRepoResponse.data.name,
+                        branchName: createRepoResponse.data.default_branch,
+                        repoOwner: createRepoResponse.data.owner.login,
+                    };
+                } else {
+                    this.logger.error('Error creating repo');
+                    // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                    throw new BlueprintError(`Error creating repo`, 500);
+                }
             } else {
                 this.logger.error('GitHub Organization not supplied');
                 // eslint-disable-next-line @typescript-eslint/no-throw-literal
@@ -118,7 +188,7 @@ export class BlueprintRepoBuilderService {
      * @param repoName
      * @param patternType
      */
-    public async initializeRepo(
+    public async initialiseRepo(
         branch: string,
         repoName: string,
         patternType: PatternType
@@ -166,7 +236,9 @@ export class BlueprintRepoBuilderService {
             repoName,
             path.resolve(
                 __dirname,
-                `./${ROOT_INITIAL_REPO_DIR}/${patternType.toLowerCase()}`
+                `./${
+                    blueprintRepoBuilderServiceConstants.rootInitialRepoDir
+                }/${patternType.toLowerCase()}`
             ),
             latestSHA,
             branch
@@ -279,7 +351,7 @@ export class BlueprintRepoBuilderService {
     }
 
     private getRelativePathFromRoot(filePath: string): string {
-        const templateRootDir = `/${ROOT_INITIAL_REPO_DIR}`;
+        const templateRootDir = `/${blueprintRepoBuilderServiceConstants.rootInitialRepoDir}`;
         return filePath.substring(
             filePath.lastIndexOf(templateRootDir) + templateRootDir.length + 5
         );
@@ -297,15 +369,7 @@ export class BlueprintRepoBuilderService {
         };
     }
 
-    /**
-     * Enable branch protection
-     * @param repoOwner
-     * @param repoName
-     * @param branchName
-     * @returns response
-     */
     public async enableBranchProtection(
-        repoOwner: string,
         repoName: string,
         branchName: string
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -313,7 +377,7 @@ export class BlueprintRepoBuilderService {
         try {
             const octokit = await this.getOctokit();
             return await octokit.request(
-                `PUT /repos/${repoOwner}/${repoName}/branches/${branchName}/protection`,
+                `PUT /repos/${this.org}/${repoName}/branches/${branchName}/protection`,
                 {
                     accept: 'application/vnd.github.v3+json',
                     // Let users merge to the branch even when a status check failed
@@ -337,15 +401,7 @@ export class BlueprintRepoBuilderService {
         }
     }
 
-    /**
-     *
-     * @param repoOwner
-     * @param repoName
-     * @param codeowners List of codeowner aliases
-     * @returns
-     */
     public async addCodeowners(
-        repoOwner: string,
         repoName: string,
         codeowners: string[]
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -355,7 +411,7 @@ export class BlueprintRepoBuilderService {
             const codeOwnersContent = `* ${codeowners.join(' ')}`;
 
             return await octokit.request(
-                `PUT /repos/${repoOwner}/${repoName}/contents/CODEOWNERS`,
+                `PUT /repos/${this.org}/${repoName}/contents/CODEOWNERS`,
                 {
                     accept: 'application/vnd.github.v3+json',
                     message: 'Add CODEOWNERS',

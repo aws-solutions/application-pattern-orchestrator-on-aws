@@ -81,13 +81,8 @@ export class SubscribeHandler
                 );
             }
 
-            if (
-                !input.email ||
-                // eslint-disable-next-line no-useless-escape
-                !/^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()\.,;\s@\"]+\.{0,1})+([^<>()\.,;:\s@\"]{2,}|[\d\.]+))$/.test(
-                    input.email
-                )
-            ) {
+            const emailregex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+            if (!emailregex.test(input.email)) {
                 return ServerlessResponse.ofObject(400, 'email must be valid.');
             }
 

@@ -34,6 +34,7 @@ import { LoggerFactory } from '../common/logging';
 import { Logger } from 'aws-xray-sdk';
 import {
     CodeBuildClient,
+    EnvironmentVariable,
     StartBuildCommand,
     StartBuildCommandInput,
 } from '@aws-sdk/client-codebuild';
@@ -67,22 +68,25 @@ export class BlueprintPipelineBuilderService {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public async invokeCodeBuildProject(blueprintObject: BlueprintObject): Promise<any> {
         try {
-            const environmentVariable = [
+            const environmentVariable: EnvironmentVariable[] = [
                 { name: 'BLUEPRINT_ID', value: blueprintObject.patternId },
                 { name: 'BLUEPRINT_TYPE', value: blueprintObject.patternType },
                 {
-                    name: 'GITHUB_REPOSITORY_OWNER',
-                    value: blueprintObject.codeRepository.repoOwner,
-                },
-                {
-                    name: 'GITHUB_REPOSITORY_NAME',
+                    name: 'REPOSITORY_NAME',
                     value: blueprintObject.codeRepository.repoName,
                 },
                 {
-                    name: 'GITHUB_REPOSITORY_MAIN_BRANCH_NAME',
-                    value: blueprintObject.codeRepository.branchName || 'main',
+                    name: 'REPOSITORY_MAIN_BRANCH_NAME',
+                    value: blueprintObject.codeRepository.branchName || 'master',
                 },
             ];
+            // CodeCommit doesn't have repoOwner
+            if (blueprintObject.codeRepository.repoOwner) {
+                environmentVariable.push({
+                    name: 'GITHUB_REPOSITORY_OWNER',
+                    value: blueprintObject.codeRepository.repoOwner,
+                });
+            }
             const startBuildCommandInput: StartBuildCommandInput = {
                 projectName:
                     process.env[

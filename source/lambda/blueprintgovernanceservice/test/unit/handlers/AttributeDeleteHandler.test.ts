@@ -38,7 +38,6 @@ describe('attribute delete handler tests', () => {
             description: 'Test description',
             patternType: 'CDK',
             codeRepository: {
-                type: 'type',
                 repoOwner: 'repoOwner',
                 branchName: 'branchName',
                 repoName: 'repoName',

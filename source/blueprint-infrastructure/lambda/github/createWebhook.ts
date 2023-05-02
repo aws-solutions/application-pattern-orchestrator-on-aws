@@ -18,6 +18,7 @@ import {
     CodeBuildClient,
     CreateWebhookCommand,
     DeleteWebhookCommand,
+    WebhookFilterType,
 } from '@aws-sdk/client-codebuild';
 import {
     SecretsManagerClient,
@@ -54,6 +55,15 @@ async function createCodebuildGithubWebhook(
     const { webhook } = await codebuildClient.send(
         new CreateWebhookCommand({
             projectName,
+            filterGroups: [
+                [
+                    {
+                        type: WebhookFilterType.EVENT,
+                        pattern:
+                            'PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED',
+                    },
+                ],
+            ],
         })
     );
 
@@ -102,7 +112,7 @@ async function createGithubWebhook(
             ...(secret && { secret }),
             content_type: 'json',
         },
-        events: ['push', 'pull_request'],
+        events: ['pull_request'],
     });
 }
 

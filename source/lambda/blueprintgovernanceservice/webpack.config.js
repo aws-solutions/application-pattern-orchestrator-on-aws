@@ -38,10 +38,7 @@ const commonConfigOptions = {
             },
         ],
     },
-    externals: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        'aws-sdk': 'aws-sdk',
-    },
+    externals: {},
     output: {
         filename: '[name]/[name].js',
         libraryTarget: 'commonjs2',

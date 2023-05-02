@@ -11,7 +11,7 @@
 - [Prerequisites](#prerequisites)
   - [AWS account](#aws-account)
   - [Tools](#tools)
-  - [GitHub or GitHub Enterprise account](#github-or-github-enterprise-account)
+  - [GitHub or GitHub Enterprise account (optional)](#github-or-github-enterprise-account)
 - [Configure the solution before deployment](#configure-the-solution-before-deployment)
   - [Configuration](#configuration)
   - [Build and deploy](#build-and-deploy)
@@ -93,14 +93,14 @@ The solution deploys the following components that work together to provide patt
 
 - The latest version of the [AWS CLI](https://aws.amazon.com/cli/), installed and configured.
 - The latest version of the [AWS CDK](https://docs.aws.amazon.com/cdk/latest/guide/home.html).
-- [Nodejs](https://docs.npmjs.com/getting-started) version ^14.17.0.
+- [Nodejs](https://docs.npmjs.com/getting-started) version 18
 - Yarn latest version installed
 
   - `npm install --global yarn`
 
-### GitHub or GitHub Enterprise account
+### GitHub or GitHub Enterprise account (only required if user's choice of source code repository for creating patterns is GitHub/GitHub Enterprise)
 
-The solution assumes the user is using GitHub to host their code repositories. The solution supports both GitHub Teams and GitHub Enterprise plans. Under GitHub Enterprise, the solution supports both Enterprise Cloud and Enterprise Server options.
+By default, the solution uses AWS CodeCommit to create pattern repositories. Customers have the flexibility to configure GitHub/GitHub Enterprise to host their code repositories. The solution supports both GitHub Teams and GitHub Enterprise (Enterprise Cloud and Enterprise Server) plans
 
 A complete list of prerequisites related to GitHub/GitHub Enterprise are listed:
 
@@ -136,19 +136,26 @@ Time to deploy: Approximately 15 minutes
 
 Use the `source/cdk.json` file to configure the solution.
 
-**GitHub/GitHub Enterprise configuration (optional)**
+**GitHub/GitHub Enterprise configuration (optional, only use if you use GitHub/GitHub Enterprise to host your source code repositories)**
 
 As mentioned in the [prerequisite section](#github-or-github-enterprise-account), by default, the solution expects a fixed name for creating a GitHub token as a secret in AWS Secrets Manager and for AWS SSM parameter for storing the AWS CodeStar connection ARN. The below configiration provides an option to the user to provide a custom name for both:
 
 ```
-"githubTokenSecretId": "<The AWS Secret Manager secret name that stores the GitHub personal access token>",
-"githubConnectionArnSsmParam": "<The SSM parameter name that stores the AWS CodeStar connection ARN to integrate with GitHub/GitHub Enterprise>"
+"githubConfig": {
+  "githubOrganization": "<The organization name in GitHub/GitHub Enterprise where the pattern’s code repositories will be created>",
+  "githubUrl": "(Optional) <The GitHub Enterprise Server URL. This option is only required for GitHub Enterprise Server, and is not required for GitHub or GitHub Enterprise Cloud>",
+  "githubTokenSecretId": "(Optional) <The AWS Secret Manager secret name that stores the GitHub personal access token>",
+  "githubConnectionArnSsmParam": "(Optional) <The SSM parameter name that stores the AWS CodeStar connection ARN to integrate with GitHub/GitHub Enterprise>"
+}
+
 ```
 
 **Data retention policy configuration (optional)**
 
 By default, all solution data (S3 buckets, DynamoDB tables) will be removed when you uninstall the solution. To retain this data, in the configuration file, set the `retainData` flag to `true`.
-
+```
+"retainData": "true",
+```
 **Network configuration (optional)**
 
 - VPC CIDR Range
@@ -158,13 +165,15 @@ By default, all solution data (S3 buckets, DynamoDB tables) will be removed when
     "vpcCidr": "x.x.x.x/x",
     ```
 
-- Private connectivity between GitHub Enterprise Server and solutions VPC
+- Private connectivity between GitHub Enterprise Server and solutions VPC **(only applicable if solution is configured to use GitHub/GitHub Enterprise)**
 
   - This is only applicable for GitHub Enterprise Server that requires a private connectivity with solution’s VPC. For such a scenario, the solution utilises [AWS Route 53 Resolvers](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver-getting-started.html) to provide private connectivity between GitHub Enterprise server and solution’s VPC and provides below configuration option to specify the GitHub Enterprise domain name and GitHub Enterprise domain resolver IP addresses. These resolver IP addresses are on the GitHub Enterprise server side that can resolve the incoming DNS requests to resolve the GitHub enterprise domain name.
 
     ```
-    "githubDomain": "<GitHub Enterprise domain name>",
-    "githubDomainResolverIpAddresses": "<comma seperator IP addresses of resolver>"
+    "githubConfig": {
+      "githubDomain": "<GitHub Enterprise domain name>",
+      "githubDomainResolverIpAddresses": "<comma seperator IP addresses of resolver>"    
+    }
     ```
 
 **Identity Provider configuration (optional)**
@@ -231,7 +240,7 @@ Example WAF Configuration:
 5. Run the below command and pass the appropriate parameters based on the specific user environment. Please refer to the [CDK deployment parameters section](#cdk-deployment-parameters) to know more about the parameters.
 
 ```
-npm run deploy -- --parameters githubUrl=<GITHUB_ENTERPRISE_URL> --parameters githubOrganization=<GITHUB_ORGANIZATION> --parameters patternType=<PATTERN_TYPE> --parameters adminEmail=<ADMIN_EMAIL> --parameters sendAnonymousData=Yes --require-approval=never
+npm run deploy -- --parameters patternType=<PATTERN_TYPE> --parameters adminEmail=<ADMIN_EMAIL> --parameters sendAnonymousData=Yes --require-approval=never
 ```
 
 #### CDK deployment parameters
@@ -240,8 +249,6 @@ You can pass the following parameters to the `npm run deploy` command as specifi
 
 | Parameter            | Description                                                                                                                                                                                                                                                                                                                                                                                         |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `githubUrl`          | (Optional) The GitHub Enterprise Server URL. This option is only required for GitHub Enterprise Server, and is not required for GitHub or GitHub Enterprise Cloud.                                                                                                                                                                                                                                  |
-| `githubOrganization` | The organization name in GitHub/GitHub Enterprise where the pattern’s code repositories will be created.                                                                                                                                                                                                                                                                                            |
 | `patternType`        | (Optional) Defaults to `CloudFormation`. The type of application patterns that the solution would enable. Valid values are: `CloudFormation` (CloudFormation based patterns are automatically published to AWS Service Catalog as products), `CDK`(CDK based patterns are automatically published to AWS CodeArtifact as npm packages), `All` (Enables both CloudFormation and CDK based patterns). |
 | `adminEmail`         | The solution creates a default user with this email address to login to the solution's UI. This has to be a valid email address as you will receive the temporary password on this email address.                                                                                                                                                                                                   |
 | `sendAnonymousData`  | (Optional) Defaults to `Yes`. Send anonymous operational metrics to AWS. We use this data to better understand how customers use this solution and related services and products.                                                                                                                                                                                                                   |
@@ -283,11 +290,12 @@ After the solution stack has been deployed and launched, you can sign in to the 
 
 ## Uninstall the solution
 
-You can unisntall the solution by deleting the stacks from the AWS CloudFormation console.
+To uninstall the solution, delete the stacks from the AWSCloudFormation console
 
 - Go to the AWS CloudFormation console, find and delete the following stacks (in the specified order)
   - All the stacks with the prefix `BlueprintInfrastructureStack`
-  - The stack name you used to deploy the solution.
+  - The stack name you used to deploy the solution with.
+- Delete the pattern repositories   (if not needed anymore). 
 
 ---
 

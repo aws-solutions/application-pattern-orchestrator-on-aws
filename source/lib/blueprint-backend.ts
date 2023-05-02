@@ -15,7 +15,10 @@
 */
 
 import * as path from 'path';
-import { BlueprintInfrastructureSetup } from './blueprint-infrastructure-setup-construct';
+import {
+    BlueprintInfrastructureSetup,
+    BlueprintInfrastructureSetupProps,
+} from './blueprint-infrastructure-setup-construct';
 import { BlueprintPortalService } from './blueprint-portal-service';
 import { AWSSecureBucket } from './infra-utils/aws-secure-bucket';
 import { Aspects, Duration, PhysicalName, RemovalPolicy } from 'aws-cdk-lib';
@@ -41,7 +44,7 @@ import {
     addCfnNagSuppression,
     CfnNagResourcePathEndingWithSuppressionAspect,
 } from './cfn-nag-suppression';
-import { LogLevelType, PatternType, WafInfo } from './blueprint-types';
+import { GithubConfig, LogLevelType, PatternType, WafInfo } from './blueprint-types';
 import { NagSuppressions } from 'cdk-nag';
 
 export interface BlueprintBackendProps {
@@ -53,10 +56,7 @@ export interface BlueprintBackendProps {
     readonly solutionVersion: string;
     readonly anonymousDataUUID: string;
     readonly customUserAgent: string;
-    readonly githubTokenSecretId: string;
-    readonly githubConnectionArnSsmParam: string;
-    readonly githubUrl: string;
-    readonly githubOrganization: string;
+    readonly githubConfig?: GithubConfig;
     readonly codeOwners?: string;
     readonly proxiUri?: string;
     readonly patternType: PatternType;
@@ -128,30 +128,32 @@ export class BlueprintBackend extends Construct {
             }
         );
 
+        const blueprintInfrastructureSetupProps: BlueprintInfrastructureSetupProps = {
+            rapmMetaDataTable,
+            rapmPublishDataTable,
+            rapmAttributesTable,
+            blueprintArtifactsBucket: blueprintArtifactsBucket.bucket,
+            s3encryptionKey: this.kmsKeys.blueprintBucket,
+            secretsManagerEncryptionKey: this.kmsKeys.blueprintSecretsManager,
+            blueprintsnsEncryptionKey: this.kmsKeys.blueprintsnsEncryptionKey,
+            rapmMetaDataTableEncryptionKey: this.kmsKeys.rapmMetaDataTableEncryptionKey,
+            customUserAgent: props.customUserAgent,
+            vpc,
+            patternType: props.patternType,
+            solutionName: props.solutionName,
+            solutionTradeMarkName: props.solutionTradeMarkName,
+            removalPolicy: props.removalPolicy,
+            logLevel: props.logLevel,
+        };
+
+        if (props.githubConfig) {
+            blueprintInfrastructureSetupProps.githubConfig = props.githubConfig;
+        }
+
         this.blueprintInfrastructureSetup = new BlueprintInfrastructureSetup(
             this,
             'BlueprintInfrastructureSetup',
-            {
-                rapmMetaDataTable,
-                rapmPublishDataTable,
-                rapmAttributesTable,
-                blueprintArtifactsBucket: blueprintArtifactsBucket.bucket,
-                s3encryptionKey: this.kmsKeys.blueprintBucket,
-                secretsManagerEncryptionKey: this.kmsKeys.blueprintSecretsManager,
-                blueprintsnsEncryptionKey: this.kmsKeys.blueprintsnsEncryptionKey,
-                rapmMetaDataTableEncryptionKey:
-                    this.kmsKeys.rapmMetaDataTableEncryptionKey,
-                customUserAgent: props.customUserAgent,
-                vpc,
-                githubUrl: props.githubUrl,
-                githubTokenSecretId: props.githubTokenSecretId,
-                githubConnectionArnSsmParam: props.githubConnectionArnSsmParam,
-                patternType: props.patternType,
-                solutionName: props.solutionName,
-                solutionTradeMarkName: props.solutionTradeMarkName,
-                removalPolicy: props.removalPolicy,
-                logLevel: props.logLevel,
-            }
+            blueprintInfrastructureSetupProps
         );
 
         this.blueprintPortalService = new BlueprintPortalService(this, id, {
@@ -171,10 +173,7 @@ export class BlueprintBackend extends Construct {
             solutionId: props.solutionId,
             solutionVersion: props.solutionVersion,
             customUserAgent: props.customUserAgent,
-            githubTokenSecretId: props.githubTokenSecretId,
-            githubUrl: props.githubUrl,
-            githubOrganization: props.githubOrganization,
-            codeOwners: props.codeOwners,
+            githubConfig: props.githubConfig,
             proxiUri: props.proxiUri,
             patternEmailTable: props.patternEmailTable,
             wafInfo: props.wafInfo,
@@ -352,7 +351,7 @@ export class BlueprintBackend extends Construct {
                 ),
                 description: `RAPM AppRegistry Updater lambda function`,
                 timeout: Duration.seconds(45),
-                runtime: Runtime.NODEJS_14_X,
+                runtime: Runtime.NODEJS_18_X,
                 memorySize: 1024,
                 initialPolicy: [serviceCatalogPolicy],
                 vpc,
@@ -366,16 +365,6 @@ export class BlueprintBackend extends Construct {
                 {
                     id: 'AwsSolutions-IAM5',
                     reason: 'This is for DescribeNetworkInterfaces permission',
-                },
-            ],
-            true
-        );
-        NagSuppressions.addResourceSuppressions(
-            appRegistryUpdaterLambda,
-            [
-                {
-                    id: 'AwsSolutions-L1',
-                    reason: 'Node 14 is still supported version and solution relies on this version.',
                 },
             ],
             true
@@ -405,7 +394,7 @@ export class BlueprintBackend extends Construct {
         const timedSynchroniserLambda = new AWSLambdaFunction(this, 'timedSynchroniser', {
             name: 'RapmTimedSynchroniser',
             description: `RAPM Timed Synrchroniser lambda function`,
-            runtime: Runtime.NODEJS_14_X,
+            runtime: Runtime.NODEJS_18_X,
             handler: 'timedSynchroniser.lambdaHandler',
             code: Code.fromAsset(
                 path.resolve(
@@ -426,16 +415,6 @@ export class BlueprintBackend extends Construct {
                 {
                     id: 'AwsSolutions-IAM5',
                     reason: 'This is for DescribeNetworkInterfaces permission',
-                },
-            ],
-            true
-        );
-        NagSuppressions.addResourceSuppressions(
-            timedSynchroniserLambda,
-            [
-                {
-                    id: 'AwsSolutions-L1',
-                    reason: 'Node 14 is still supported version and solution relies on this version.',
                 },
             ],
             true

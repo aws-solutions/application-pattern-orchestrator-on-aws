@@ -146,9 +146,7 @@ export abstract class AttributeBaseHandler
         const errors: string[] = [];
         if (
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-            !event ||
-            !event.pathParameters ||
-            !event.pathParameters.id ||
+            !event?.pathParameters?.id ||
             !regAttributeId.test(decodeURIComponent(event.pathParameters.id))
         ) {
             validated &&= false;

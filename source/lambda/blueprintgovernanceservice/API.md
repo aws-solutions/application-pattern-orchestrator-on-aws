@@ -1,7 +1,7 @@
 <a name="top"></a>
-# Acme project v0.0.0
+# Application Pattern Orchestrator on AWS v1.1.0
 
-REST Api
+Application Pattern Orchestrator on AWS API Documentation
 
 # Table of contents
 
@@ -587,8 +587,6 @@ API Headers {"Access-Control-Allow-Origin":"*","X-Amzn-Trace-Id":"Root=1-6168f48
                 "SecurityLevel": "Medium"
             },
             "codeRepository": {
-                "type": "github",
-                "repoOwner": "enterprise",
                 "branchName": "master",
                 "repoName": "sample-pattern1"
             }

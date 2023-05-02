@@ -230,6 +230,14 @@ export class BlueprintAuthentication extends Construct {
             value: this.cognitoDomain,
             description: 'Cognito hosted domain',
         });
+        new CfnOutput(this, 'CognitoUserPoolId', {
+            value: this.userPoolId,
+            description: 'Cognito user pool id',
+        });
+        new CfnOutput(this, 'CognitoUserPoolAppClientId', {
+            value: this.appClientId,
+            description: 'Cognito user pool app client id',
+        });
     }
 
     private buildIdentityPool(

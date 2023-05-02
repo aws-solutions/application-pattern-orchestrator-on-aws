@@ -57,6 +57,57 @@ export interface IdentityProviderInfo {
     attributeMapping?: Record<OidcClaim, string>;
 }
 
+export interface GithubConfig {
+    githubOrganization: string;
+    githubTokenSecretId: string;
+    githubConnectionArnSsmParam: string;
+    githubUrl?: string;
+    githubDomain?: string;
+    githubDomainResolverIpAddresses?: string;
+    githubCodeOwners?: string;
+}
+
+export type GithubConfigBlueprintInfraSharedConfig = Pick<
+    GithubConfig,
+    'githubUrl' | 'githubTokenSecretId'
+>;
+
+export interface CodeCommitConfig {
+    patternRepoNotificationTopicArn: string;
+}
+
+export interface BlueprintInfraSharedConfig {
+    vpcId: string;
+    blueprintInfrastructureBucketName: string;
+    blueprintInfrastructureArchiveName: string;
+    rapmMetaDataTable: string;
+    rapmPublishDataTable: string;
+    rapmAttributesTable: string;
+    rapmMetaDataTableEncryptionKey?: string;
+    rapmPublishDataTableEncryptionKey?: string;
+    rapmAttributesTableEncryptionKey?: string;
+    blueprintArtifactsBucketName: string;
+    blueprintArtifactsBucketEncryptionKeyArn?: string;
+    blueprintInfrastructureNotifTopicArn: string;
+    blueprintGovernanceNotificationTopicArn: string;
+    blueprintSnsEncryptionKeyArn: string;
+    s3BucketEncryptionKeyArn: string;
+    secretsManagerEncryptionKeyArn: string;
+    codeArtifactDomainName: string;
+    codeArtifactRepositoryName: string;
+    blueprintServiceCatalogPortfolioId: string;
+    customUserAgent: string;
+    proxyUri: string;
+    updateBlueprintInfrastructureProjectName: string;
+    updateBlueprintInfrastructureProjectRoleArn: string;
+    blueprintInfrastructureSecurityGroupId: string;
+    solutionName: string;
+    solutionTradeMarkName: string;
+    logLevel: LogLevelType;
+    githubConfig?: GithubConfigBlueprintInfraSharedConfig;
+    codeCommitConfig?: CodeCommitConfig;
+}
+
 export interface WafInfo {
     /**
      * IP addresses to be allowed to access API endpointd
@@ -72,3 +123,5 @@ export interface WafInfo {
      */
     wafCloudFrontWebAclArn?: string;
 }
+
+export type PatternRepoType = 'CodeCommit' | 'GitHub';
