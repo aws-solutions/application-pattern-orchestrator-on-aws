@@ -26,7 +26,7 @@
         "@types/node": "^18.14.5",
         "@typescript-eslint/eslint-plugin": "^5.54.1",
         "@typescript-eslint/parser": "^5.54.1",
-        "aws-cdk": "^2.76.0",
+        "aws-cdk": "^2.85.0",
         "aws-lambda": "^1.0.7",
         "aws-sdk-client-mock": "^2.0.1",
         "constructs": "^10.1.84",
@@ -53,10 +53,14 @@
         "@aws-sdk/client-sns": "^3.310.0",
         "@aws-sdk/lib-dynamodb": "^3.310.0",
         "@octokit/rest": "^19.0.3",
-        "aws-cdk-lib": "^2.76.0",
+        "aws-cdk-lib": "^2.85.0",
         "js-yaml": "^4.1.0",
         "js-yaml-cloudformation-schema": "^1.0.0",
         "source-map-support": "^0.5.21",
         "winston": "^3.8.1"
+    },
+    "overrides": {
+        "fast-xml-parser": "^4.2.5",
+        "semver": "^7.5.3"
     }
 }
