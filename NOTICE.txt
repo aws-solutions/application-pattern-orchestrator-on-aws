@@ -16,8 +16,8 @@ This software includes third party software subject to the following copyrights:
 @aws-cdk/asset-awscli-v1@2.2.139                             Apache-2.0
 @aws-cdk/asset-kubectl-v20@2.1.1                             Apache-2.0
 @aws-cdk/asset-node-proxy-agent-v5@2.0.115                   Apache-2.0
-@aws-cdk/aws-servicecatalogappregistry-alpha@2.76.0-alpha.0  Apache-2.0
-@aws-cdk/aws-synthetics-alpha@2.76.0-alpha.0                 Apache-2.0
+@aws-cdk/aws-servicecatalogappregistry-alpha@2.85.0-alpha.0  Apache-2.0
+@aws-cdk/aws-synthetics-alpha@2.85.0-alpha.0                 Apache-2.0
 @balena/dockerignore@1.0.2                                   Apache-2.0
 @colors/colors@1.5.0                                         MIT
 @dabh/diagnostics@2.0.3                                      MIT
@@ -30,7 +30,7 @@ astral-regex@2.0.0                                           MIT
 async@3.2.4                                                  MIT
 at-least-node@1.0.0                                          ISC
 available-typed-arrays@1.0.5                                 MIT
-aws-cdk-lib@2.76.0                                           Apache-2.0
+aws-cdk-lib@2.85.0                                           Apache-2.0
 aws-sdk@2.1358.0                                             Apache-2.0
 balanced-match@1.0.2                                         MIT
 base64-js@1.5.1                                              MIT
@@ -248,7 +248,7 @@ argparse@2.0.1                                      Python-2.0
 astral-regex@2.0.0                                  MIT
 async@3.2.4                                         MIT
 at-least-node@1.0.0                                 ISC
-aws-cdk-lib@2.76.0                                  Apache-2.0
+aws-cdk-lib@2.85.0                                  Apache-2.0
 balanced-match@1.0.2                                MIT
 before-after-hook@2.2.3                             Apache-2.0
 blueprint-infrastructure@1.0.0                      Apache-2.0
