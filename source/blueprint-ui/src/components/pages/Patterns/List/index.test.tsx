@@ -28,6 +28,20 @@ import { GetPatternsApiResponse } from '../../../types';
 const mockUseHistoryReplaceFn = jest.fn();
 const mockUseHistoryPushFn = jest.fn();
 
+jest.mock('../../../core/AppContext', () => {
+    return {
+        ...jest.requireActual('../../../core/AppContext'),
+        useAppContext: jest.fn().mockImplementation(() => {
+            return {
+                user: {
+                    email: 'test@test.com',
+                    groups: ['SYSTEM_ADMIN'],
+                },
+            };
+        }),
+    };
+});
+
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
     useHistory: () => ({

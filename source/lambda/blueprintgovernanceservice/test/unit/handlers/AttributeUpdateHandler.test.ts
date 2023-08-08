@@ -58,7 +58,7 @@ describe('attribute update handler tests', () => {
 
         const handler = new AttributeUpdateHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
 
         const event = {
@@ -78,7 +78,7 @@ describe('attribute update handler tests', () => {
                 },
                 body: JSON.stringify(event),
             }) as APIGatewayProxyEvent,
-            id
+            id,
         );
 
         expect(data).toEqual({
@@ -107,7 +107,7 @@ describe('attribute update handler tests', () => {
 
         const handler = new AttributeUpdateHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
 
         const event = {
@@ -130,8 +130,8 @@ describe('attribute update handler tests', () => {
                     },
                     body: JSON.stringify(event),
                 }) as APIGatewayProxyEvent,
-                {} as Context
-            )
+                {} as Context,
+            ),
         ).rejects.toEqual({
             message: 'Specified attribute is not found. id: TESTKEY:TESTVALUE',
             name: 'BasicHttpError',
@@ -166,7 +166,7 @@ describe('attribute update handler tests', () => {
 
         const handler = new AttributeUpdateHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
 
         const event = {
@@ -188,7 +188,7 @@ describe('attribute update handler tests', () => {
                 },
                 body: JSON.stringify(event),
             }) as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         expect(data).toEqual({
@@ -244,7 +244,7 @@ describe('attribute update handler tests', () => {
 
         const handler = new AttributeUpdateHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
 
         const event = {
@@ -266,8 +266,8 @@ describe('attribute update handler tests', () => {
                     },
                     body: JSON.stringify(event),
                 }) as APIGatewayProxyEvent,
-                {} as Context
-            )
+                {} as Context,
+            ),
         ).rejects.toEqual({
             message:
                 'The key and value are not allowed to be updated. Current Key: TestKey, Value: TestValue',
@@ -302,7 +302,7 @@ describe('attribute update handler tests', () => {
 
         const handler = new AttributeUpdateHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
 
         const event = {
@@ -324,8 +324,8 @@ describe('attribute update handler tests', () => {
                     },
                     body: JSON.stringify(event),
                 }) as APIGatewayProxyEvent,
-                {} as Context
-            )
+                {} as Context,
+            ),
         ).rejects.toEqual({
             message:
                 'The key and value are not allowed to be updated. Current Key: TestKey, Value: TestValue',
@@ -360,7 +360,7 @@ describe('attribute update handler tests', () => {
 
         const handler = new AttributeUpdateHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
         const event = {
             key: 'TestKey1',
@@ -381,8 +381,8 @@ describe('attribute update handler tests', () => {
                     },
                     body: JSON.stringify(event),
                 }) as APIGatewayProxyEvent,
-                {} as Context
-            )
+                {} as Context,
+            ),
         ).rejects.toEqual({
             message:
                 'The key and value are not allowed to be updated. Current Key: TestKey, Value: TestValue',

@@ -38,14 +38,14 @@ describe('response format tests', () => {
 
         const mockHandler: (
             _event: typeof event,
-            _context: Context
+            _context: Context,
         ) => Promise<typeof response> = jest.fn().mockResolvedValueOnce(response);
         const lambdaHandler = middy(mockHandler).use(respFormatter);
 
         const result = await lambdaHandler(
             event,
             {} as Context,
-            (<unknown>null) as Callback<typeof response>
+            (<unknown>null) as Callback<typeof response>,
         );
 
         expect(result).toEqual({
@@ -68,14 +68,14 @@ describe('response format tests', () => {
 
         const mockHandler: (
             _event: typeof event,
-            _context: Context
+            _context: Context,
         ) => Promise<typeof response> = jest.fn().mockResolvedValueOnce(response);
         const lambdaHandler = middy(mockHandler).use(respFormatter);
 
         const result = await lambdaHandler(
             event,
             {} as Context,
-            (<unknown>null) as Callback<typeof response>
+            (<unknown>null) as Callback<typeof response>,
         );
 
         expect(result).toEqual(response);
@@ -99,7 +99,7 @@ describe('response format tests', () => {
 
         const mockHandler: (
             _event: typeof event,
-            _context: Context
+            _context: Context,
         ) => Promise<typeof response> = jest
             .fn()
             .mockRejectedValueOnce(new BasicHttpError(400, 'Error occurs'));
@@ -108,7 +108,7 @@ describe('response format tests', () => {
         const result = await lambdaHandler(
             event,
             {} as Context,
-            (<unknown>null) as Callback<typeof response>
+            (<unknown>null) as Callback<typeof response>,
         );
 
         expect(result).toEqual({
@@ -141,7 +141,7 @@ describe('response format tests', () => {
 
         const mockHandler: (
             _event: typeof event,
-            _context: Context
+            _context: Context,
         ) => Promise<typeof response> = jest.fn(() => {
             throw Error('Something is wrong');
         });
@@ -150,7 +150,7 @@ describe('response format tests', () => {
         const result = await lambdaHandler(
             event,
             {} as Context,
-            (<unknown>null) as Callback<typeof response>
+            (<unknown>null) as Callback<typeof response>,
         );
 
         expect(result).toEqual({

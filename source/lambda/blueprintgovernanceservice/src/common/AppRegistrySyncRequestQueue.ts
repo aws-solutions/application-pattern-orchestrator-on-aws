@@ -31,7 +31,7 @@ function getLogger(): Logger {
 }
 
 export async function addSyncRequestToQueue(
-    id: string
+    id: string,
 ): Promise<AWS.SQS.SendMessageResult | undefined> {
     const logger = getLogger();
     // use try catch to make sure this function will not throw errors
@@ -49,8 +49,8 @@ export async function addSyncRequestToQueue(
     } catch (e: any) {
         logger.error(
             `Failed to send update message to AppRegistry Update Queue. Error: ${JSON.stringify(
-                e
-            )}, ID: ${id} `
+                e,
+            )}, ID: ${id} `,
         );
         return undefined;
     }

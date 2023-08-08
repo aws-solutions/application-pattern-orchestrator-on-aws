@@ -83,7 +83,7 @@ export class BlueprintFrontend extends Construct {
                     reason: 'This is false positive. Bucket policy has condition to block Non Https traffic',
                 },
             ],
-            true
+            true,
         );
 
         /**
@@ -141,7 +141,7 @@ export class BlueprintFrontend extends Construct {
                     reason: 'This is false positive. Bucket policy has condition to block Non Https traffic',
                 },
             ],
-            true
+            true,
         );
         addCfnNagSuppression(loggingBucket as Construct, [
             {
@@ -168,7 +168,7 @@ export class BlueprintFrontend extends Construct {
                     prefix: '',
                 },
                 webACLId: props.webAclArn,
-            }
+            },
         );
 
         const cfnDist: CfnDistribution = this.distribution.node
@@ -219,7 +219,7 @@ export class BlueprintFrontend extends Construct {
                         'aws:SecureTransport': 'false',
                     },
                 },
-            })
+            }),
         );
     }
 }

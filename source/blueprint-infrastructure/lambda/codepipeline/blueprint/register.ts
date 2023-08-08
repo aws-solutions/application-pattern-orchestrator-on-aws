@@ -55,7 +55,7 @@ const snsClient = new SNSClient(awsSdkConfiguration);
 const codepipelineClient = new CodePipelineClient(awsSdkConfiguration);
 
 async function registerBlueprintVersion(
-    item: Partial<BlueprintVersionObject>
+    item: Partial<BlueprintVersionObject>,
 ): Promise<void> {
     // Inserting publish data and updating lastCommitId in metadata table in a transaction
     await ddbDocClient.transactWrite({
@@ -85,7 +85,7 @@ async function registerBlueprintVersion(
 }
 
 export async function notifySubscribers(
-    item: Partial<BlueprintVersionObject>
+    item: Partial<BlueprintVersionObject>,
 ): Promise<void> {
     const patternDetails = await getPatternById(ddbDocClient, item.patternId as string);
 
@@ -173,14 +173,14 @@ export async function handler(event: CodePipelineEvent, context: Context): Promi
         const changedPackagesParsed = CHANGED_PACKAGES
             ? JSON.parse(
                   // The products JSON is base 64 encoded by the publish handler
-                  Buffer.from(CHANGED_PACKAGES, 'base64').toString()
+                  Buffer.from(CHANGED_PACKAGES, 'base64').toString(),
               )
             : undefined;
 
         const allPackagesParsed = ALL_PACKAGES
             ? JSON.parse(
                   // The products JSON is base 64 encoded by the publish handler
-                  Buffer.from(ALL_PACKAGES, 'base64').toString()
+                  Buffer.from(ALL_PACKAGES, 'base64').toString(),
               )
             : undefined;
 
@@ -189,9 +189,9 @@ export async function handler(event: CodePipelineEvent, context: Context): Promi
                 name: changedPackagesItem.name,
                 version: allPackagesParsed.find(
                     (allPackagesItem: NpmPackageDetails) =>
-                        allPackagesItem.name === changedPackagesItem.name
+                        allPackagesItem.name === changedPackagesItem.name,
                 ).version,
-            })
+            }),
         );
 
         if (
@@ -207,7 +207,7 @@ export async function handler(event: CodePipelineEvent, context: Context): Promi
             (allPackagesItem: NpmPackageDetails) => ({
                 name: allPackagesItem.name,
                 version: allPackagesItem.version,
-            })
+            }),
         );
 
         const artifacts: BlueprintArtifact[] = [];
@@ -249,13 +249,13 @@ export async function handler(event: CodePipelineEvent, context: Context): Promi
         const changedServiceCatalogProducts = CHANGED_SERVICE_CATALOG_PRODUCTS
             ? JSON.parse(
                   // The products JSON is base 64 encoded by the publish handler
-                  Buffer.from(CHANGED_SERVICE_CATALOG_PRODUCTS, 'base64').toString()
+                  Buffer.from(CHANGED_SERVICE_CATALOG_PRODUCTS, 'base64').toString(),
               )
             : undefined;
         const allServiceCatalogProducts = ALL_SERVICE_CATALOG_PRODUCTS
             ? JSON.parse(
                   // The products JSON is base 64 encoded by the publish handler
-                  Buffer.from(ALL_SERVICE_CATALOG_PRODUCTS, 'base64').toString()
+                  Buffer.from(ALL_SERVICE_CATALOG_PRODUCTS, 'base64').toString(),
               )
             : undefined;
 
@@ -285,7 +285,7 @@ export async function handler(event: CodePipelineEvent, context: Context): Promi
         await codepipelineClient.send(
             new PutJobSuccessResultCommand({
                 jobId,
-            })
+            }),
         );
     } catch (e) {
         logger.error(`Error: ${JSON.stringify(e)}`);
@@ -297,7 +297,7 @@ export async function handler(event: CodePipelineEvent, context: Context): Promi
                     type: 'JobFailed',
                     externalExecutionId: context.awsRequestId,
                 },
-            })
+            }),
         );
         throw e;
     }

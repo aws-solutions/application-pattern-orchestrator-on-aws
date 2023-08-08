@@ -47,7 +47,7 @@ describe('Trigger Security check codebuild handler tests', () => {
                     },
                 ],
             } as unknown as SNSEvent,
-            {} as unknown as Context
+            {} as unknown as Context,
         );
         expect(codeBuildClientMock.calls()).toHaveLength(1);
         expect(codeBuildClientMock.call(0).firstArg).toBeInstanceOf(StartBuildCommand);

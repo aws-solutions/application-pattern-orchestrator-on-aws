@@ -22,7 +22,8 @@ import Button from 'aws-northstar/components/Button';
 import Inline from 'aws-northstar/layouts/Inline';
 import { formatDate } from '../../../../utils/helpers';
 import { ROUTE_ATTRIBUTE_CREATE, ROUTE_ATTRIBUTE_UPDATE } from '../../../routes';
-import { AttributeSummary } from '../../../types';
+import { AttributeSummary, PERMISSION_ATTRIBUTE_MANAGE } from '../../../types';
+import HasPermission from '../../../core/HasPermission';
 
 export interface AttributeTableProps {
     attributes?: AttributeSummary[];
@@ -100,38 +101,40 @@ const AttributeTable: FunctionComponent<AttributeTableProps> = ({
             : '';
 
         return (
-            <Inline>
-                {!disableRowSelect && (
-                    <Button
-                        disabled={selectedAttributes.length !== 1}
-                        onClick={() => {
-                            history.push(pathUpdate);
-                        }}
-                    >
-                        Update
-                    </Button>
-                )}
-                {!disableRowSelect && !disableDelete && (
-                    <Button
-                        disabled={selectedAttributes.length !== 1}
-                        onClick={() => {
-                            onDeleteAttribute(selectedAttributes);
-                        }}
-                    >
-                        Delete
-                    </Button>
-                )}
-                {!disableCreate && (
-                    <Button
-                        variant="primary"
-                        onClick={() => {
-                            history.push(ROUTE_ATTRIBUTE_CREATE);
-                        }}
-                    >
-                        Add new Attribute
-                    </Button>
-                )}
-            </Inline>
+            <HasPermission groups={PERMISSION_ATTRIBUTE_MANAGE}>
+                <Inline>
+                    {!disableRowSelect && (
+                        <Button
+                            disabled={selectedAttributes.length !== 1}
+                            onClick={() => {
+                                history.push(pathUpdate);
+                            }}
+                        >
+                            Update
+                        </Button>
+                    )}
+                    {!disableRowSelect && !disableDelete && (
+                        <Button
+                            disabled={selectedAttributes.length !== 1}
+                            onClick={() => {
+                                onDeleteAttribute(selectedAttributes);
+                            }}
+                        >
+                            Delete
+                        </Button>
+                    )}
+                    {!disableCreate && (
+                        <Button
+                            variant="primary"
+                            onClick={() => {
+                                history.push(ROUTE_ATTRIBUTE_CREATE);
+                            }}
+                        >
+                            Add new Attribute
+                        </Button>
+                    )}
+                </Inline>
+            </HasPermission>
         );
     }, [
         selectedAttributes,

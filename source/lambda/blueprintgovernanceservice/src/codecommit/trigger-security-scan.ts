@@ -23,13 +23,13 @@ const codeBuildClient = new CodeBuildClient(awsSdkV3Configuration);
 
 export async function handler(
     event: lambda.SNSEvent,
-    context: lambda.Context
+    context: lambda.Context,
 ): Promise<void> {
     const logger = getLogger('codecommit-trigger-security-scan');
     logger.debug(
         `Processing event ${JSON.stringify(event)} with context ${JSON.stringify(
-            context
-        )}`
+            context,
+        )}`,
     );
     const snsMessage = JSON.parse(event.Records[0].Sns.Message);
     const sourceCommitId = snsMessage.detail.sourceCommit;
@@ -54,6 +54,6 @@ export async function handler(
                     value: prId,
                 },
             ],
-        })
+        }),
     );
 }

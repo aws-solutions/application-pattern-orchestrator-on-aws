@@ -50,9 +50,17 @@ export interface BlueprintInfraSharedConfig {
     solutionName: string;
     solutionTradeMarkName: string;
     logLevel: LogLevelType;
+    securityScanTool: SecurityScanTool;
     githubConfig?: GithubConfigBlueprintInfraSharedConfig;
     codeCommitConfig?: CodeCommitConfig;
 }
+
+export interface SecurityScanTool {
+    name: SecurityScanToolName;
+    cfnGuardManagedRuleSets?: string[];
+}
+
+export type SecurityScanToolName = 'CfnGuard' | 'CfnNag' | 'Checkov';
 
 export type GithubConfigBlueprintInfraSharedConfig = Pick<
     GithubConfig,

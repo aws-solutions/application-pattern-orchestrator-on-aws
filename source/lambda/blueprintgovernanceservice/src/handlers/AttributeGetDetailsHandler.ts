@@ -70,7 +70,7 @@ export class AttributeGetDetailsHandler extends AttributeBaseHandler {
     public constructor(
         @inject('LoggerFactory') loggerFactory: LoggerFactory,
         @inject('BlueprintDBService')
-        private readonly blueprintDBService: BlueprintDBService
+        private readonly blueprintDBService: BlueprintDBService,
     ) {
         super();
         this.logger = loggerFactory.getLogger(handlerName);
@@ -81,7 +81,7 @@ export class AttributeGetDetailsHandler extends AttributeBaseHandler {
     public async process(
         event: APIGatewayProxyEvent,
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        _context: Context
+        _context: Context,
     ): Promise<BasicHttpResponse> {
         const id = await this.getEntityId(event);
         this.logger.info(`${handlerName} Get Entity Details id:${id}`);

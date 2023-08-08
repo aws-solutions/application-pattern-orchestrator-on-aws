@@ -132,7 +132,7 @@ export class GetAllBlueprintsRequestHandler
     public constructor(
         @inject('LoggerFactory') loggerFactory: LoggerFactory,
         @inject('BlueprintDBService')
-        private readonly blueprintDBService: BlueprintDBService
+        private readonly blueprintDBService: BlueprintDBService,
     ) {
         this.logger = loggerFactory.getLogger('GetBlueprintsRequestHandler');
     }
@@ -146,7 +146,7 @@ export class GetAllBlueprintsRequestHandler
     public async handle(
         event: APIGatewayProxyEvent,
         // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
-        _context: Context
+        _context: Context,
     ): Promise<ServerlessResponse> {
         this.logger.debug('Processing list pattern request');
 
@@ -157,7 +157,7 @@ export class GetAllBlueprintsRequestHandler
         this.logger.debug(`Listing patterns, up to ${limit} patterns will be returned.`);
         const patterns = await this.blueprintDBService.listBlueprints(
             limit,
-            event.queryStringParameters?.nextToken
+            event.queryStringParameters?.nextToken,
         );
         this.logger.debug(`Found ${patterns.results.length} patterns.`);
 
@@ -169,7 +169,7 @@ export class GetAllBlueprintsRequestHandler
                 lastCommitPublishData =
                     await this.blueprintDBService.getBlueprintPublishDataByCommitId(
                         patternMetaData.patternId,
-                        patternMetaData.lastCommitId
+                        patternMetaData.lastCommitId,
                     );
             }
             patternsList.push({

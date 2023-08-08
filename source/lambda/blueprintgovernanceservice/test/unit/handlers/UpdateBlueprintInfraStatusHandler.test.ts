@@ -74,7 +74,7 @@ describe('Update blueprint infrastructure status handler tests', () => {
             {
                 Records: [],
             },
-            {}
+            {},
         );
         expect(ddbMock.calls()).toHaveLength(0);
     });
@@ -90,7 +90,7 @@ describe('Update blueprint infrastructure status handler tests', () => {
                     } as SNSEventRecord,
                 ],
             },
-            {}
+            {},
         );
         expect(ddbMock.calls()).toHaveLength(0);
     });
@@ -106,7 +106,7 @@ describe('Update blueprint infrastructure status handler tests', () => {
                     } as SNSEventRecord,
                 ],
             },
-            {}
+            {},
         );
         expect(ddbMock.calls()).toHaveLength(0);
     });
@@ -122,7 +122,7 @@ describe('Update blueprint infrastructure status handler tests', () => {
                     } as SNSEventRecord,
                 ],
             },
-            {}
+            {},
         );
         expect(ddbMock.calls()).toHaveLength(1);
         console.log(ddbMock.call(0).args[0].input);

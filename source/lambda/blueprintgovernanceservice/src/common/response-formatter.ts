@@ -23,18 +23,18 @@ const defaultConfig: ConfigType = {
     headers: {},
 };
 const responseFormatter = <T, R>(
-    config: ConfigType = defaultConfig
+    config: ConfigType = defaultConfig,
 ): middy.MiddlewareObj<T, R> => {
     const addHeaders = (
         request: middy.Request,
-        additonalHeaders?: Record<string, string>
+        additonalHeaders?: Record<string, string>,
     ): void => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         request.response.headers = Object.assign(
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             request?.response?.headers || {},
-            additonalHeaders
+            additonalHeaders,
         );
     };
 
@@ -50,7 +50,7 @@ const responseFormatter = <T, R>(
             // other exceptions, respond with 500 - Internal Server Error
             request.response = BasicHttpResponse.ofError(
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                BasicHttpError.internalServerError(request.error!.message)
+                BasicHttpError.internalServerError(request.error!.message),
             ) as unknown as R;
         }
     };

@@ -28,7 +28,7 @@ export interface IBlueprintRepoBuilderService {
      */
     createAndInitializeRepo(
         repoName: string,
-        patternType: PatternType
+        patternType: PatternType,
     ): Promise<BlueprintCodeRepoDetails>;
 
     /**

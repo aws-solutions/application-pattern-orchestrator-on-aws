@@ -39,8 +39,21 @@ export const Authenticate: FunctionComponent = ({ children }) => {
         Auth.currentAuthenticatedUser()
             .then((currentUser) => {
                 logger.debug('Authenticated user', currentUser);
+                let federatedGroups =
+                    currentUser.attributes['custom:groups'] ?? JSON.stringify([]);
+                try {
+                    federatedGroups = JSON.parse(federatedGroups);
+                } catch (e) {
+                    logger.debug(`federatedGroups is already parsed`);
+                }
+                const cognitoUserPoolGroups =
+                    currentUser.signInUserSession.accessToken?.payload[
+                        'cognito:groups'
+                    ] ?? [];
+                const groups = cognitoUserPoolGroups.concat(federatedGroups);
                 setUser({
                     email: currentUser.attributes.email,
+                    groups,
                 });
                 Cache.removeItem('signingIn');
             })

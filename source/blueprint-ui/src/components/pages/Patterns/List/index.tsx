@@ -28,7 +28,8 @@ import GetAllPatternsQuery from '../../../queries/GetAllPatternsQuery';
 import QueryContainerTemplate from '../../../core/QueryContainerTemplate';
 import BlueprintInfrastructureStatus from '../../InfrastructureStatus/index';
 import { formatDate } from '../../../../utils/helpers';
-import { PatternWithPublishData } from '../../../types';
+import { PERMISSION_PATTERN_MANAGE, PatternWithPublishData } from '../../../types';
+import HasPermission from '../../../core/HasPermission';
 
 export const getColumnDefinitions = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -226,24 +227,26 @@ const PatternsList: FunctionComponent = () => {
             : '';
 
         return (
-            <Inline>
-                <Button
-                    disabled={selectedPatterns.length !== 1}
-                    onClick={() => {
-                        history.push(pathUpdate);
-                    }}
-                >
-                    Update
-                </Button>
-                <Button
-                    variant="primary"
-                    onClick={() => {
-                        history.push(ROUTE_BLUEPRINT_CREATE);
-                    }}
-                >
-                    Create new Pattern
-                </Button>
-            </Inline>
+            <HasPermission groups={PERMISSION_PATTERN_MANAGE}>
+                <Inline>
+                    <Button
+                        disabled={selectedPatterns.length !== 1}
+                        onClick={() => {
+                            history.push(pathUpdate);
+                        }}
+                    >
+                        Update
+                    </Button>
+                    <Button
+                        variant="primary"
+                        onClick={() => {
+                            history.push(ROUTE_BLUEPRINT_CREATE);
+                        }}
+                    >
+                        Create new Pattern
+                    </Button>
+                </Inline>
+            </HasPermission>
         );
     }, [history, selectedPatterns]);
 

@@ -1,6 +1,7 @@
 {
     "name": "cdk-test-app",
     "version": "1.0.0",
+    "license": "Apache-2.0",
     "private": "true",
     "description": "CDK Test app to generate CDK templates for all constructs.",
     "bin": {

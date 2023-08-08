@@ -115,7 +115,7 @@ describe('test GetAllBlueprintsRequestHandler', () => {
 
         const objectUnderTest = new GetAllBlueprintsRequestHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
         expect(
             await objectUnderTest.handle(
@@ -124,8 +124,8 @@ describe('test GetAllBlueprintsRequestHandler', () => {
                     //   pathParameters: { id: '123' },
                     headers: { ttl: new Date().getTime().toString() },
                 } as unknown as APIGatewayProxyEvent,
-                {} as Context
-            )
+                {} as Context,
+            ),
         ).toBeDefined();
     });
 
@@ -140,14 +140,14 @@ describe('test GetAllBlueprintsRequestHandler', () => {
 
         const objectUnderTest = new GetAllBlueprintsRequestHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
         const results = await objectUnderTest.handle(
             {
                 body: JSON.stringify('inputRequest'),
                 headers: { ttl: new Date().getTime().toString() },
             } as unknown as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         const statusCode = results.statusCode;
@@ -164,19 +164,19 @@ describe('test GetAllBlueprintsRequestHandler', () => {
         blueprintDBService.getBlueprintPublishDataByCommitId =
             getPatternPublishDataHandle;
         getPatternPublishDataHandle.mockReturnValue(
-            dbGetPatternPublishDataByLastCommitIdResponse
+            dbGetPatternPublishDataByLastCommitIdResponse,
         );
 
         const objectUnderTest = new GetAllBlueprintsRequestHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
         const response = await objectUnderTest.handle(
             {
                 body: JSON.stringify('inputRequest'),
                 headers: { ttl: new Date().getTime().toString() },
             } as unknown as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         const statusCode = response.statusCode;
@@ -191,7 +191,7 @@ describe('test GetAllBlueprintsRequestHandler', () => {
                             dbGetPatternPublishDataByLastCommitIdResponse,
                     },
                 ],
-            })
+            }),
         );
     });
 
@@ -205,12 +205,12 @@ describe('test GetAllBlueprintsRequestHandler', () => {
         blueprintDBService.getBlueprintPublishDataByCommitId =
             getPatternPublishDataHandle;
         getPatternPublishDataHandle.mockReturnValue(
-            dbGetPatternPublishDataByLastCommitIdResponse
+            dbGetPatternPublishDataByLastCommitIdResponse,
         );
 
         const objectUnderTest = new GetAllBlueprintsRequestHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
         const response = await objectUnderTest.handle(
             {
@@ -218,7 +218,7 @@ describe('test GetAllBlueprintsRequestHandler', () => {
                 pathParameters: { limit: '2' },
                 headers: { ttl: new Date().getTime().toString() },
             } as unknown as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         const statusCode = response.statusCode;
@@ -233,7 +233,7 @@ describe('test GetAllBlueprintsRequestHandler', () => {
                             dbGetPatternPublishDataByLastCommitIdResponse,
                     },
                 ],
-            })
+            }),
         );
     });
 });

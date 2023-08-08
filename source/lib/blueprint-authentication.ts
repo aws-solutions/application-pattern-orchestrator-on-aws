@@ -17,8 +17,10 @@ import { Aws, CfnOutput, RemovalPolicy, SecretValue } from 'aws-cdk-lib';
 import {
     CfnIdentityPool,
     CfnIdentityPoolRoleAttachment,
+    CfnUserPoolGroup,
     CfnUserPoolIdentityProvider,
     CfnUserPoolUser,
+    CfnUserPoolUserToGroupAttachment,
     StringAttribute,
     UserPool,
     UserPoolClient,
@@ -50,7 +52,7 @@ export class BlueprintAuthentication extends Construct {
     public constructor(
         scope: Construct,
         id: string,
-        props: BlueprintAuthenticationProps
+        props: BlueprintAuthenticationProps,
     ) {
         super(scope, id);
 
@@ -88,7 +90,10 @@ export class BlueprintAuthentication extends Construct {
             autoVerify: {
                 email: true,
             },
-            customAttributes: { roles: new StringAttribute({ mutable: true }) },
+            customAttributes: {
+                roles: new StringAttribute({ mutable: true }),
+                groups: new StringAttribute({ mutable: true }),
+            },
             removalPolicy: props.removalPolicy,
         });
 
@@ -120,7 +125,7 @@ export class BlueprintAuthentication extends Construct {
             let clientSecret = undefined;
             if (identityProviderInfo.clientSecretArn) {
                 clientSecret = SecretValue.secretsManager(
-                    identityProviderInfo.clientSecretArn
+                    identityProviderInfo.clientSecretArn,
                 );
             }
             identityProvider = new CfnUserPoolIdentityProvider(this, 'IdentityProvider', {
@@ -162,7 +167,7 @@ export class BlueprintAuthentication extends Construct {
                 ...(props.identityProviderInfo?.providerName
                     ? [
                           UserPoolClientIdentityProvider.custom(
-                              props.identityProviderInfo.providerName
+                              props.identityProviderInfo.providerName,
                           ),
                       ]
                     : []),
@@ -183,13 +188,43 @@ export class BlueprintAuthentication extends Construct {
             { name: 'email', value: props.adminEmail },
         ];
 
-        new CfnUserPoolUser(this, 'AdminUser', {
+        const adminUser = new CfnUserPoolUser(this, 'AdminUser', {
             userPoolId: userPool.userPoolId,
             desiredDeliveryMediums: ['EMAIL'],
             forceAliasCreation: true,
             userAttributes: adminUserAttributes,
             username: props.adminEmail,
         });
+
+        // Sys Admin user group
+        const systemAdminUserGroup = new CfnUserPoolGroup(this, 'SysAdminUserGroup', {
+            userPoolId: userPool.userPoolId,
+            description: 'System admin user group',
+            groupName: 'SYSTEM_ADMIN',
+        });
+
+        // Pattern publisher user group
+        new CfnUserPoolGroup(this, 'PatternPublisherUserGroup', {
+            userPoolId: userPool.userPoolId,
+            description: 'Pattern publisher user group',
+            groupName: 'PATTERN_PUBLISHER',
+        });
+
+        // By default admin user to be part of SYS_ADMIN group
+        const userPoolUserToGroupAttachment = new CfnUserPoolUserToGroupAttachment(
+            this,
+            'AdminUserToSystemAdminGroupAttachment',
+            {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                groupName: systemAdminUserGroup.groupName!,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                username: adminUser.username!,
+                userPoolId: userPool.userPoolId,
+            },
+        );
+
+        userPoolUserToGroupAttachment.addDependency(adminUser);
+        userPoolUserToGroupAttachment.addDependency(systemAdminUserGroup);
 
         const identityPool = this.buildIdentityPool(userPool, client);
 
@@ -242,7 +277,7 @@ export class BlueprintAuthentication extends Construct {
 
     private buildIdentityPool(
         userPool: UserPool,
-        client: UserPoolClient
+        client: UserPoolClient,
     ): CfnIdentityPool {
         return new CfnIdentityPool(this, 'IdentityPool', {
             allowUnauthenticatedIdentities: false,
@@ -260,7 +295,7 @@ export class BlueprintAuthentication extends Construct {
         const publicRole = this.buildIdentityPoolRole(
             'CognitoPublicRole',
             'unauthenticated',
-            identityPool
+            identityPool,
         );
         return publicRole;
     }
@@ -269,11 +304,11 @@ export class BlueprintAuthentication extends Construct {
         const authRole = this.buildIdentityPoolRole(
             'CognitoAuthRole',
             'authenticated',
-            identityPool
+            identityPool,
         );
 
         authRole.addManagedPolicy(
-            ManagedPolicy.fromAwsManagedPolicyName('AmazonAPIGatewayInvokeFullAccess')
+            ManagedPolicy.fromAwsManagedPolicyName('AmazonAPIGatewayInvokeFullAccess'),
         );
         NagSuppressions.addResourceSuppressions(authRole, [
             {
@@ -288,7 +323,7 @@ export class BlueprintAuthentication extends Construct {
     private buildIdentityPoolRole(
         name: string,
         type: 'authenticated' | 'unauthenticated',
-        identityPool: CfnIdentityPool
+        identityPool: CfnIdentityPool,
     ): Role {
         return new Role(this, name, {
             assumedBy: new FederatedPrincipal(
@@ -305,7 +340,7 @@ export class BlueprintAuthentication extends Construct {
                         'cognito-identity.amazonaws.com:amr': type,
                     },
                 },
-                'sts:AssumeRoleWithWebIdentity'
+                'sts:AssumeRoleWithWebIdentity',
             ),
         });
     }
@@ -316,7 +351,7 @@ export class BlueprintAuthentication extends Construct {
 
             if (!this.isValidIssuerUri(identityProviderInfo.oidcIssuer)) {
                 throw new Error(
-                    'Invalid issuerUri. Please specify a valid issuerUri in cdk.json.'
+                    'Invalid issuerUri. Please specify a valid issuerUri in cdk.json.',
                 );
             }
 
@@ -324,7 +359,7 @@ export class BlueprintAuthentication extends Construct {
             const mustHaveScopes: OidcAuthorizeScope[] = ['openid', 'profile'];
             if (!mustHaveScopes.every((scope) => authorizeScopes.includes(scope))) {
                 throw new Error(
-                    'Invalid authorize scopes. Please specify valid authorize scopes which should contain openid and profile in cdk.json.'
+                    'Invalid authorize scopes. Please specify valid authorize scopes which should contain openid and profile in cdk.json.',
                 );
             }
         }

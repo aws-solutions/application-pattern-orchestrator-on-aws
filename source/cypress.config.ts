@@ -70,7 +70,7 @@ async function deleteNpmPackagesFromCodeArtifact(): Promise<void> {
                 format: 'npm',
                 package: packageName,
                 namespace: 'cypress-cdk',
-            })
+            }),
         );
         console.log(`Deleted the npm package ${packageName}`);
     }
@@ -81,7 +81,7 @@ async function deleteGithubSourceCodeRepo(
     githubBaseUrl: string,
     githubToken: string,
     githubOrg: string,
-    repoName: string
+    repoName: string,
 ): Promise<void> {
     const octokit = getOctokit(githubBaseUrl, githubToken);
     await octokit.request(`DELETE /repos/${githubOrg}/${repoName}`);
@@ -93,7 +93,7 @@ async function deleteCodeCommmitSourceCodeRepo(repositoryName: string): Promise<
     await codeCommitClient.send(
         new DeleteRepositoryCommand({
             repositoryName,
-        })
+        }),
     );
     console.log(`Deleted codecommit source code repo: ${repositoryName}`);
 }
@@ -105,7 +105,7 @@ async function deletePatternStack(patternName: string): Promise<void> {
     await cfnClient.send(
         new DeleteStackCommand({
             StackName: stackName,
-        })
+        }),
     );
 
     await waitUntilStackDeleteComplete(
@@ -115,7 +115,7 @@ async function deletePatternStack(patternName: string): Promise<void> {
         },
         {
             StackName: stackName,
-        }
+        },
     );
     console.log(`Stack: ${stackName} deletion completed successfully`);
 }
@@ -125,7 +125,7 @@ async function deleteFromDynamoDbTable(patternName: string): Promise<void> {
     // get table names
     const listTablesResponse = await ddbClient.send(new ListTablesCommand({}));
     const publishTableArr = listTablesResponse.TableNames?.filter((item) =>
-        item.startsWith('ApoStack-RapmBackendrapmPublishDataTable')
+        item.startsWith('ApoStack-RapmBackendrapmPublishDataTable'),
     );
     if (publishTableArr) {
         if (publishTableArr.length > 1) {
@@ -133,7 +133,7 @@ async function deleteFromDynamoDbTable(patternName: string): Promise<void> {
         }
         const publishTableName = publishTableArr[0];
         const metaDataTableArr = listTablesResponse.TableNames?.filter((item) =>
-            item.startsWith('ApoStack-RapmBackendrapmMetaDataTable')
+            item.startsWith('ApoStack-RapmBackendrapmMetaDataTable'),
         );
         if (metaDataTableArr) {
             if (metaDataTableArr.length > 1) {
@@ -149,7 +149,7 @@ async function deleteFromDynamoDbTable(patternName: string): Promise<void> {
                     ExpressionAttributeValues: {
                         ':patternId': { S: patternName },
                     },
-                })
+                }),
             );
 
             // delete publish data for pattern
@@ -166,13 +166,13 @@ async function deleteFromDynamoDbTable(patternName: string): Promise<void> {
                                     S: patternPublishItem.commitId.S as string,
                                 },
                             },
-                        })
+                        }),
                     );
                 }
             }
 
             console.log(
-                `Deleted pattern's publish data from publish table. (${patternName})`
+                `Deleted pattern's publish data from publish table. (${patternName})`,
             );
             // Delete metadata table
             await ddbClient.send(
@@ -183,10 +183,10 @@ async function deleteFromDynamoDbTable(patternName: string): Promise<void> {
                             S: patternName,
                         },
                     },
-                })
+                }),
             );
             console.log(
-                `Deleted pattern's meta data from metadata table (${patternName})`
+                `Deleted pattern's meta data from metadata table (${patternName})`,
             );
         }
     }
@@ -196,7 +196,7 @@ async function deleteFromDynamoDbTable(patternName: string): Promise<void> {
 async function deleteServiceCatalogProduct(patternName: string): Promise<void> {
     const listCommandResponse = await scClient.send(new ListPortfoliosCommand({}));
     const portfolioResponse = listCommandResponse.PortfolioDetails?.find(
-        (element) => element.DisplayName === 'PatternsPortfolio'
+        (element) => element.DisplayName === 'PatternsPortfolio',
     );
     if (!portfolioResponse) {
         throw new Error(`Can't find portfolio PatternsPortfolio`);
@@ -206,7 +206,7 @@ async function deleteServiceCatalogProduct(patternName: string): Promise<void> {
     const describeProductAsAdminResponse = await scClient.send(
         new DescribeProductAsAdminCommand({
             Name: `${patternName}_dynamodb`,
-        })
+        }),
     );
 
     // Disassociate product from portfolio
@@ -216,19 +216,19 @@ async function deleteServiceCatalogProduct(patternName: string): Promise<void> {
         new DisassociateProductFromPortfolioCommand({
             PortfolioId: portfolioId,
             ProductId: productId,
-        })
+        }),
     );
     console.log(
-        `Disassociated the product ${patternName}_dynamodb from portfolio. (PatternName: ${patternName})`
+        `Disassociated the product ${patternName}_dynamodb from portfolio. (PatternName: ${patternName})`,
     );
     // Delete product
     scClient.send(
         new DeleteProductCommand({
             Id: productId,
-        })
+        }),
     );
     console.log(
-        `Deleted the service catalog product ${patternName}_dynamodb. (PatternName: ${patternName})`
+        `Deleted the service catalog product ${patternName}_dynamodb. (PatternName: ${patternName})`,
     );
 }
 
@@ -263,7 +263,7 @@ module.exports = defineConfig({
                     const getParamResp = await ssmClient.send(
                         new GetParameterCommand({
                             Name: ssmParamApoEndpoint,
-                        })
+                        }),
                     );
                     const apoApiEndpoint = getParamResp.Parameter?.Value;
 
@@ -291,7 +291,7 @@ module.exports = defineConfig({
                     const getParamResp = await ssmClient.send(
                         new GetParameterCommand({
                             Name: ssmParamApoEndpoint,
-                        })
+                        }),
                     );
                     const apoApiEndpoint = getParamResp.Parameter?.Value;
 
@@ -306,11 +306,11 @@ module.exports = defineConfig({
                             `${apoApiEndpoint}attributes/${attributeKey}:${attributeValue}`,
                             {
                                 headers: { Authorization: `Bearer ${accessToken}` },
-                            }
+                            },
                         );
                     } catch (e) {
                         console.log(
-                            `attribute ${attributeKey}:${attributeValue} doesn't exist, hence ignoring delete`
+                            `attribute ${attributeKey}:${attributeValue} doesn't exist, hence ignoring delete`,
                         );
                     }
                     return null;
@@ -323,12 +323,12 @@ module.exports = defineConfig({
                               config.env.templateDir,
                               config.env.githubBaseUrl,
                               config.env.githubToken,
-                              patternType
+                              patternType,
                           )
                         : await commitAndPushToCodeCommitPatternRepo(
                               patternName,
                               config.env.templateDir,
-                              patternType
+                              patternType,
                           );
                     return null;
                 },
@@ -347,7 +347,7 @@ module.exports = defineConfig({
                               config.env.githubBaseUrl,
                               config.env.githubToken,
                               config.env.githubOrg,
-                              patternName
+                              patternName,
                           )
                         : await deleteCodeCommmitSourceCodeRepo(patternName);
                     return null;
@@ -363,7 +363,7 @@ async function commitAndPushToGitHubPatternRepo(
     templateDir: string,
     githubBaseUrl: string,
     githubToken: string,
-    patternType: string
+    patternType: string,
 ): Promise<null> {
     const repoName = patternName;
     const octokit = getOctokit(githubBaseUrl, githubToken);
@@ -376,7 +376,7 @@ async function commitAndPushToGitHubPatternRepo(
     do {
         try {
             latestSHAResp = await octokit.request(
-                `GET /repos/${githubOrg}/${repoName}/branches/master`
+                `GET /repos/${githubOrg}/${repoName}/branches/master`,
             );
             if (latestSHAResp.status >= 200 && latestSHAResp.status <= 299) {
                 retry = false;
@@ -405,7 +405,7 @@ async function commitAndPushToGitHubPatternRepo(
         githubBaseUrl,
         githubToken,
         githubOrg,
-        templateDir
+        templateDir,
     );
 
     // 3. Create the commit
@@ -416,7 +416,7 @@ async function commitAndPushToGitHubPatternRepo(
             message: 'feat: added packages',
             parents: [latestSHA],
             tree: createTreeResp.data.sha,
-        }
+        },
     );
 
     // 4. Update the reference of your branch to point to the new commit SHA (on master branch example)
@@ -431,20 +431,20 @@ async function commitAndPushToGitHubPatternRepo(
 async function commitAndPushToCodeCommitPatternRepo(
     repoName: string,
     templateDir: string,
-    patternType: string
+    patternType: string,
 ): Promise<void> {
     const branchName = 'master';
     const getBranchRes = await codeCommitClient.send(
         new GetBranchCommand({
             repositoryName: repoName,
             branchName,
-        })
+        }),
     );
     // initialise repo
     const putFilesArr: PutFileEntry[] = [];
     const dirPath = path.resolve(
         __dirname,
-        `./${templateDir}/${patternType.toLowerCase()}`
+        `./${templateDir}/${patternType.toLowerCase()}`,
     );
     buildPutFilesArr(patternType, templateDir, dirPath, branchName, putFilesArr);
     await codeCommitClient.send(
@@ -454,7 +454,7 @@ async function commitAndPushToCodeCommitPatternRepo(
             parentCommitId: getBranchRes.branch?.commitId,
             commitMessage: 'Initialise repository',
             putFiles: putFilesArr,
-        })
+        }),
     );
 }
 
@@ -463,7 +463,7 @@ function buildPutFilesArr(
     templateDir: string,
     dirPath: string,
     branchName: string,
-    putFileEntryArr: PutFileEntry[]
+    putFileEntryArr: PutFileEntry[],
 ): void {
     const list = fs.readdirSync(dirPath);
     for (const fname of list) {
@@ -477,7 +477,7 @@ function buildPutFilesArr(
             const fileContent = fs.readFileSync(file).toString();
             const fileRelativePath = file.substring(
                 path.resolve(__dirname, `./${templateDir}/${patternType.toLowerCase()}`)
-                    .length + 1
+                    .length + 1,
             );
             putFileEntryArr.push({
                 filePath: fileRelativePath,
@@ -501,7 +501,7 @@ async function createGitTreeArray(
     templateDir: string,
     gitTreeArray?:
         | { path: unknown; mode: string; type: string; sha: unknown }[]
-        | undefined
+        | undefined,
 ) {
     if (!gitTreeArray) {
         gitTreeArray = [];
@@ -520,7 +520,7 @@ async function createGitTreeArray(
                 githubToken,
                 githubOrg,
                 templateDir,
-                gitTreeArray
+                gitTreeArray,
             );
         } else {
             /* Is a file */
@@ -530,7 +530,7 @@ async function createGitTreeArray(
                 githubBaseUrl,
                 githubToken,
                 githubOrg,
-                templateDir
+                templateDir,
             );
             gitTreeArray.push(treeObjForCommit);
         }
@@ -547,7 +547,7 @@ async function getGitTree(
     githubBaseUrl: string,
     githubToken: string,
     githubOrg: string,
-    templateDir: string
+    templateDir: string,
 ) {
     const octokit = getOctokit(githubBaseUrl, githubToken);
     const tree = await createGitTreeArray(
@@ -556,7 +556,7 @@ async function getGitTree(
         githubBaseUrl,
         githubToken,
         githubOrg,
-        templateDir
+        templateDir,
     );
     return octokit.request(`POST /repos/${githubOrg}/${repoName}/git/trees`, {
         accept: 'application/vnd.github.v3+json',
@@ -575,7 +575,7 @@ async function getTreeObjectForCommit(
     githubBaseUrl: string,
     githubToken: string,
     githubOrg: string,
-    templateDir: string
+    templateDir: string,
 ): Promise<{
     path: string;
     mode: string;
@@ -590,7 +590,7 @@ async function getTreeObjectForCommit(
             accept: 'application/vnd.github.v3+json',
             content,
             encoding: 'utf-8',
-        }
+        },
     );
     const relativePathFromRoot = getRelativePathFromRoot(filePath, templateDir);
     return getTreeObject(relativePathFromRoot, createBlob.data.sha);
@@ -599,7 +599,7 @@ async function getTreeObjectForCommit(
 function getRelativePathFromRoot(filePath: string, templateDir: string): string {
     const templateRootDir = `/${templateDir}`;
     return filePath.substring(
-        filePath.lastIndexOf(templateRootDir) + templateRootDir.length + 5
+        filePath.lastIndexOf(templateRootDir) + templateRootDir.length + 5,
     );
 }
 
@@ -609,7 +609,7 @@ function getRelativePathFromRoot(filePath: string, templateDir: string): string 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function getTreeObject(
     filePath: string,
-    sha: string
+    sha: string,
 ): {
     path: string;
     mode: string;

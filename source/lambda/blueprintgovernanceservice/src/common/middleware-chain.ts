@@ -19,7 +19,7 @@ import middy from '@middy/core';
 export type LambdaHandler<T, R, C extends Context = Context> = (
     event: T,
     context: C,
-    callback: Callback<R>
+    callback: Callback<R>,
     // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 ) => void | Promise<R>;
 
@@ -33,10 +33,10 @@ export class MiddlewareChain<T, R, C extends Context = Context> {
     public readonly lambdaHandler: LambdaHandler<T, R, C>;
     public constructor(
         asyncHandlerObj: AsyncHandlerObj<T, R, C>,
-        middlewares: middy.MiddlewareObj<T, R>[]
+        middlewares: middy.MiddlewareObj<T, R>[],
     ) {
         const middyHandler = middy(
-            asyncHandlerObj.handle.bind(asyncHandlerObj) as AsyncHandler<T, R, Context>
+            asyncHandlerObj.handle.bind(asyncHandlerObj) as AsyncHandler<T, R, Context>,
         );
         middyHandler.use(middlewares);
         // eslint-disable-next-line @typescript-eslint/no-invalid-void-type

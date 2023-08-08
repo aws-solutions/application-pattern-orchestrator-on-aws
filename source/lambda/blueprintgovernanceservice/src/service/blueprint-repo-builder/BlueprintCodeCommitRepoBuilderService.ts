@@ -48,7 +48,7 @@ export class BlueprintCodeCommitRepoBuilderService
     private readonly codeCommitClient: CodeCommitClient;
     public constructor(
         @inject('LoggerFactory') loggerFactory: LoggerFactory,
-        @inject('CodeCommitClient') codeCommitClient: CodeCommitClient
+        @inject('CodeCommitClient') codeCommitClient: CodeCommitClient,
     ) {
         this.logger = loggerFactory.getLogger('BlueprintRepoBuilderService');
         this.codeCommitClient = codeCommitClient;
@@ -60,18 +60,18 @@ export class BlueprintCodeCommitRepoBuilderService
             await this.codeCommitClient.send(
                 new DeleteRepositoryCommand({
                     repositoryName: repoName,
-                })
+                }),
             );
         } catch (e) {
             this.logger.error(
-                `Unable to delete the repo: ${repoName}: ${JSON.stringify(e, null, 4)}`
+                `Unable to delete the repo: ${repoName}: ${JSON.stringify(e, null, 4)}`,
             );
             throw e;
         }
     }
     public async createAndInitializeRepo(
         repoName: string,
-        patternType: PatternType
+        patternType: PatternType,
     ): Promise<BlueprintCodeRepoDetails> {
         // Create repo
         let createRepoResponse: CreateRepositoryCommandOutput;
@@ -79,23 +79,22 @@ export class BlueprintCodeCommitRepoBuilderService
             createRepoResponse = await this.codeCommitClient.send(
                 new CreateRepositoryCommand({
                     repositoryName: repoName,
-                })
+                }),
             );
         } catch (e) {
             this.logger.error(
-                `Error creating repo: ${repoName}, ${JSON.stringify(e, null, 4)}`
+                `Error creating repo: ${repoName}, ${JSON.stringify(e, null, 4)}`,
             );
             // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw new BlueprintError(`Error creating repo: ${repoName}`, 500);
         }
         if (
             createRepoResponse.$metadata.httpStatusCode == 200 &&
-            createRepoResponse.repositoryMetadata &&
-            createRepoResponse.repositoryMetadata.cloneUrlHttp &&
+            createRepoResponse.repositoryMetadata?.cloneUrlHttp &&
             createRepoResponse.repositoryMetadata.repositoryName
         ) {
             this.logger.debug(
-                `Create Repo Response: ${JSON.stringify(createRepoResponse, null, 4)}`
+                `Create Repo Response: ${JSON.stringify(createRepoResponse, null, 4)}`,
             );
 
             // initialise repo
@@ -103,7 +102,7 @@ export class BlueprintCodeCommitRepoBuilderService
                 await this.initialiseRepo(repoName, patternType);
             } catch (e) {
                 this.logger.error(
-                    `Error initialising repo: ${repoName}: ${JSON.stringify(e, null, 4)}`
+                    `Error initialising repo: ${repoName}: ${JSON.stringify(e, null, 4)}`,
                 );
                 // rollback the repo creation
                 await this.deleteRepo(repoName);
@@ -119,19 +118,19 @@ export class BlueprintCodeCommitRepoBuilderService
             };
         } else {
             this.logger.error(
-                `Repo details not returned from create repo API: ${repoName}`
+                `Repo details not returned from create repo API: ${repoName}`,
             );
             // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw new BlueprintError(
                 `Repo details not returned from create repo API: ${repoName}`,
-                500
+                500,
             );
         }
     }
 
     private async initialiseRepo(
         repoName: string,
-        patternType: PatternType
+        patternType: PatternType,
     ): Promise<void> {
         // first commit having readme file
         await this.codeCommitClient.send(
@@ -140,20 +139,20 @@ export class BlueprintCodeCommitRepoBuilderService
                 branchName: defaultBranchName,
                 filePath: 'README.md',
                 fileContent: Buffer.from(`# ${repoName}`),
-            })
+            }),
         );
         const getBranchRes = await this.codeCommitClient.send(
             new GetBranchCommand({
                 repositoryName: repoName,
                 branchName: defaultBranchName,
-            })
+            }),
         );
         // initialise repo
         const putFilesArr: PutFileEntry[] = [];
         const dirPath = path.resolve(
             __dirname,
             blueprintRepoBuilderServiceConstants.rootInitialRepoDir,
-            patternType.toLowerCase()
+            patternType.toLowerCase(),
         );
         this.buildPutFilesArr(patternType, dirPath, defaultBranchName, putFilesArr);
         await this.codeCommitClient.send(
@@ -163,7 +162,7 @@ export class BlueprintCodeCommitRepoBuilderService
                 parentCommitId: getBranchRes.branch?.commitId,
                 commitMessage: 'Initialise repository',
                 putFiles: putFilesArr,
-            })
+            }),
         );
     }
 
@@ -171,7 +170,7 @@ export class BlueprintCodeCommitRepoBuilderService
         patternType: PatternType,
         dirPath: string,
         branchName: string,
-        putFileEntryArr: PutFileEntry[]
+        putFileEntryArr: PutFileEntry[],
     ): void {
         const list = fs.readdirSync(dirPath);
         for (const fname of list) {
@@ -183,15 +182,15 @@ export class BlueprintCodeCommitRepoBuilderService
             } else {
                 /* Is a file */
                 const template = handlebars.compile(
-                    fs.existsSync(file) ? fs.readFileSync(file).toString() : ''
+                    fs.existsSync(file) ? fs.readFileSync(file).toString() : '',
                 );
                 const fileContent = template({ branchName });
                 const fileRelativePath = file.substring(
                     path.resolve(
                         __dirname,
                         blueprintRepoBuilderServiceConstants.rootInitialRepoDir,
-                        patternType.toLowerCase()
-                    ).length + 1
+                        patternType.toLowerCase(),
+                    ).length + 1,
                 );
                 putFileEntryArr.push({
                     filePath: fileRelativePath,

@@ -85,7 +85,7 @@ describe('Register blueprint handler tests', () => {
                     },
                 },
             } as CodePipelineEvent,
-            {} as Context
+            {} as Context,
         );
     });
 
@@ -105,7 +105,7 @@ describe('Register blueprint handler tests', () => {
                     },
                 },
             } as CodePipelineEvent,
-            {} as Context
+            {} as Context,
         );
         expect(cpMock.calls()).toHaveLength(1);
         expect(cpMock.call(0).firstArg).toBeInstanceOf(PutJobSuccessResultCommand);
@@ -134,7 +134,7 @@ describe('Register blueprint handler tests', () => {
                     },
                 },
             } as CodePipelineEvent,
-            {} as Context
+            {} as Context,
         );
 
         expect(cpMock.calls()).toHaveLength(1);
@@ -201,10 +201,10 @@ describe('Register blueprint handler tests', () => {
                                     VERSION_COMMIT_ID: 'commitabcd',
                                     VERSION_COMMIN_MESSAGE: 'commit message test',
                                     CHANGED_SERVICE_CATALOG_PRODUCTS: Buffer.from(
-                                        JSON.stringify([serviceCatalogProduct])
+                                        JSON.stringify([serviceCatalogProduct]),
                                     ).toString('base64'),
                                     ALL_SERVICE_CATALOG_PRODUCTS: Buffer.from(
-                                        JSON.stringify([serviceCatalogProduct])
+                                        JSON.stringify([serviceCatalogProduct]),
                                     ).toString('base64'),
                                     CHANGED_PACKAGES:
                                         Buffer.from(CHANGED_PACKAGES).toString('base64'),
@@ -216,7 +216,7 @@ describe('Register blueprint handler tests', () => {
                     },
                 },
             } as CodePipelineEvent,
-            {} as Context
+            {} as Context,
         );
         expect(cpMock.calls()).toHaveLength(1);
         expect(cpMock.call(0).firstArg).toBeInstanceOf(PutJobSuccessResultCommand);
@@ -302,7 +302,7 @@ describe('Register blueprint handler tests', () => {
                     },
                 },
             } as CodePipelineEvent,
-            {} as Context
+            {} as Context,
         );
         expect(cpMock.calls()).toHaveLength(1);
         expect(cpMock.call(0).firstArg).toBeInstanceOf(PutJobSuccessResultCommand);
@@ -385,14 +385,14 @@ describe('Register blueprint handler tests', () => {
                                         VERSION_COMMIT_ID: 'commitabcd',
                                         VERSION_COMMIN_MESSAGE: 'commit message test',
                                         CHANGED_SERVICE_CATALOG_PRODUCTS: Buffer.from(
-                                            JSON.stringify([serviceCatalogProduct])
+                                            JSON.stringify([serviceCatalogProduct]),
                                         ).toString('base64'),
                                         ALL_SERVICE_CATALOG_PRODUCTS: Buffer.from(
-                                            JSON.stringify([serviceCatalogProduct])
+                                            JSON.stringify([serviceCatalogProduct]),
                                         ).toString('base64'),
                                         CHANGED_PACKAGES:
                                             Buffer.from(CHANGED_PACKAGES).toString(
-                                                'base64'
+                                                'base64',
                                             ),
                                         ALL_PACKAGES:
                                             Buffer.from(ALL_PACKAGES).toString('base64'),
@@ -402,7 +402,7 @@ describe('Register blueprint handler tests', () => {
                         },
                     },
                 } as CodePipelineEvent,
-                {} as Context
+                {} as Context,
             );
 
         await expect(() => task()).rejects.toThrow();
@@ -534,7 +534,7 @@ describe('Register blueprint handler tests', () => {
                     region: testRegion,
                     products: testServiceCatalogProducts.map((p) => p.name),
                 },
-            })
+            }),
         );
     });
 
@@ -646,7 +646,7 @@ describe('Register blueprint handler tests', () => {
                     domain: testCodeArtifactDomain,
                     repository: testCodeArtifactRepository,
                 },
-            })
+            }),
         );
     });
 });

@@ -46,10 +46,10 @@ const logger = getLogger('UpdateBlueprintListStatusHandler');
  */
 export async function updateBlueprintInfrastructureStackStatus(
     patternId: string,
-    status: string
+    status: string,
 ): Promise<void> {
     logger.info(
-        `Updating pattern ${patternId} with infrastructure stack status ${status}`
+        `Updating pattern ${patternId} with infrastructure stack status ${status}`,
     );
     await ddbDocClient.update({
         Key: {
@@ -69,11 +69,11 @@ export async function updateBlueprintInfrastructureStackStatus(
  * @returns
  */
 const getBlueprintIdFromInfrastructureStackName = async (
-    stackName: string
+    stackName: string,
 ): Promise<string | undefined> => {
     const stack = await cfnClient.send(
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        new DescribeStacksCommand({ StackName: stackName })
+        new DescribeStacksCommand({ StackName: stackName }),
     );
     return stack.Stacks?.[0].Tags?.find((tag) => tag.Key == 'blueprintId')?.Value;
 };
@@ -91,7 +91,7 @@ export async function handler(event: SNSEvent, _context: unknown): Promise<void>
             (record: SNSEventRecord) => {
                 // Transform the sns message to an array of lines
                 return record.Sns.Message.split('\n');
-            }
+            },
         ).filter((messagesLines: string[]) => {
             // Apply filter to only keep cloudformation stack update messages
             return messagesLines.includes("ResourceType='AWS::CloudFormation::Stack'");
@@ -110,23 +110,23 @@ export async function handler(event: SNSEvent, _context: unknown): Promise<void>
                         [key]: value?.slice(1, -1), // Remove quotes around the value string
                     };
                 }, {});
-            }
+            },
         );
 
         // Update the infrastructure stack status of each blueprint
         for (const cfStackNotification of cfStackNotifications) {
             const blueprintId = await getBlueprintIdFromInfrastructureStackName(
-                cfStackNotification.StackName
+                cfStackNotification.StackName,
             );
 
             if (blueprintId) {
                 await updateBlueprintInfrastructureStackStatus(
                     blueprintId,
-                    cfStackNotification['ResourceStatus']
+                    cfStackNotification['ResourceStatus'],
                 );
             } else {
                 logger.info(
-                    `Could not find the blueprint ID for stack ${cfStackNotification.StackName}`
+                    `Could not find the blueprint ID for stack ${cfStackNotification.StackName}`,
                 );
             }
         }

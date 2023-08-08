@@ -90,7 +90,7 @@ describe('attribute list handler tests', () => {
 
         const handler = new AttributeListHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
 
         const data = await handler.handle(
@@ -99,7 +99,7 @@ describe('attribute list handler tests', () => {
                 resource: '/attributes',
                 body: '',
             }) as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         expect(data).toEqual({
@@ -171,7 +171,7 @@ describe('attribute list handler tests', () => {
 
         const handler = new AttributeListHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
 
         await expect(
@@ -184,8 +184,8 @@ describe('attribute list handler tests', () => {
                     },
                     body: '',
                 }) as APIGatewayProxyEvent,
-                {} as Context
-            )
+                {} as Context,
+            ),
         ).rejects.toEqual({
             message:
                 'The maxRow must be an integer between 1 and 1000. If not specified, the default value is 100.',
@@ -204,7 +204,7 @@ describe('attribute list handler tests', () => {
 
         const handler = new AttributeListHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
 
         await expect(
@@ -217,8 +217,8 @@ describe('attribute list handler tests', () => {
                     },
                     body: '',
                 }) as APIGatewayProxyEvent,
-                {} as Context
-            )
+                {} as Context,
+            ),
         ).rejects.toEqual({
             message: 'Unsupported query parameter. Query Parameters: xyz',
             name: 'BasicHttpError',

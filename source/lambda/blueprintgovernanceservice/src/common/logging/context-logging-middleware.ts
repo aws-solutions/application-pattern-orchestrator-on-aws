@@ -28,10 +28,10 @@ export function ContextLoggingMiddleware<TEvent, TResponse>(
     additionalMetadata?: Record<
         string,
         (event: APIGatewayProxyEvent, context: Context) => string
-    >
+    >,
 ): middy.MiddlewareObj<TEvent, TResponse> {
     const before: middy.MiddlewareFn<TEvent, TResponse> = async (
-        request
+        request,
     ): Promise<void> => {
         const logMetadata: Record<string, (event: TEvent, context: Context) => string> = {
             ...additionalMetadata,
@@ -54,13 +54,13 @@ export function ContextLoggingMiddleware<TEvent, TResponse>(
             request.context,
             runningLocally,
             logMetadata,
-            logLevel
+            logLevel,
         );
 
         const loggingContextContainer = rootContainer.createChildContainer();
         loggingContextContainer.registerInstance<LoggerFactory>(
             'LoggerFactory',
-            loggerFactory
+            loggerFactory,
         );
         const loggingContext: LoggingContext = {
             ...request.context,
@@ -71,13 +71,13 @@ export function ContextLoggingMiddleware<TEvent, TResponse>(
     };
 
     const after: middy.MiddlewareFn<TEvent, TResponse> = async (
-        request
+        request,
     ): Promise<void> => {
         (request.context as LoggingContext).loggingContextContainer.clearInstances();
     };
 
     const onError: middy.MiddlewareFn<TEvent, TResponse> = async (
-        request
+        request,
     ): Promise<void> => {
         (request.context as LoggingContext).loggingContextContainer.clearInstances();
     };

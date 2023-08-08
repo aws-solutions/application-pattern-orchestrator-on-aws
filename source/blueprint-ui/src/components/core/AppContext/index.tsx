@@ -18,14 +18,12 @@ import { User } from '../../types';
 
 export interface BlueprintContext {
     user?: User;
-    email: string;
     setUser: (user: User) => void;
 }
 
 const AppContext = createContext<BlueprintContext>({
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     setUser: () => {},
-    email: 'guest',
 });
 
 export const AppContextProvider: FunctionComponent = ({ children }) => {
@@ -36,7 +34,6 @@ export const AppContextProvider: FunctionComponent = ({ children }) => {
             value={{
                 user: authenticatedUser,
                 setUser: setAuthenticatedUser,
-                email: authenticatedUser?.email ?? 'guest',
             }}
         >
             {children}

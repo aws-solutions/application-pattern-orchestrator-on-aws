@@ -20,7 +20,7 @@ import { InjectionToken } from 'tsyringe';
 
 export interface RouteData<
     TResponse extends BasicHttpResponse,
-    THandler extends AsyncHandlerObj<APIGatewayProxyEvent, TResponse>
+    THandler extends AsyncHandlerObj<APIGatewayProxyEvent, TResponse>,
 > {
     predicate: (event: APIGatewayProxyEvent) => boolean;
     handlerToken: InjectionToken<THandler>;

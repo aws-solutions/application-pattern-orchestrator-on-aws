@@ -35,57 +35,57 @@ const routes = new Router()
     // Patterns routes
     .addRoute(
         (e) => e.httpMethod === 'POST' && e.resource == '/patterns',
-        CreateBlueprintRequestHandler
+        CreateBlueprintRequestHandler,
     )
     .addRoute(
         (e) => e.httpMethod === 'GET' && e.resource == '/patterns',
-        GetAllBlueprintsRequestHandler
+        GetAllBlueprintsRequestHandler,
     )
     .addRoute(
         (e) => e.httpMethod === 'GET' && e.resource == '/patterns/{id}',
-        GetBlueprintInfoHandler
+        GetBlueprintInfoHandler,
     )
     .addRoute(
         (e) => e.httpMethod === 'PUT' && e.resource == '/patterns/{id}',
-        UpdateBlueprintMetaInfoHandler
+        UpdateBlueprintMetaInfoHandler,
     )
     .addRoute(
         (e) => e.httpMethod === 'PUT' && e.resource == '/patterns/pipeline/{id}',
-        InitialiseBlueprintPipelineHandler
+        InitialiseBlueprintPipelineHandler,
     )
     // Attributes routes
     .addRoute(
         (e) => e.httpMethod === 'POST' && e.resource == '/attributes',
-        AttributeCreateHandler
+        AttributeCreateHandler,
     )
     .addRoute(
         (e) => e.httpMethod === 'GET' && e.resource == '/attributes',
-        AttributeListHandler
+        AttributeListHandler,
     )
     .addRoute(
         (e) => e.httpMethod === 'PUT' && e.resource == '/attributes/{id}',
-        AttributeUpdateHandler
+        AttributeUpdateHandler,
     )
     .addRoute(
         (e) => e.httpMethod === 'GET' && e.resource == '/attributes/{id}',
-        AttributeGetDetailsHandler
+        AttributeGetDetailsHandler,
     )
     .addRoute(
         (e) => e.httpMethod === 'DELETE' && e.resource == '/attributes/{id}',
-        AttributeDeleteHandler
+        AttributeDeleteHandler,
     )
     // Pattern subscription notification routes
     .addRoute(
         (e) => e.httpMethod === 'POST' && e.resource === '/subscriptions',
-        SubscribeHandler
+        SubscribeHandler,
     )
     .addRoute(
         (e) => e.httpMethod === 'DELETE' && e.resource === '/subscriptions',
-        SubscribeHandler
+        SubscribeHandler,
     )
     .addRoute(
         (e) => e.httpMethod === 'GET' && e.resource === '/subscriptions',
-        GetSubscriptionHandler
+        GetSubscriptionHandler,
     );
 setupContainer(routes);
 

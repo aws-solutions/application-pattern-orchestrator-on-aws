@@ -257,7 +257,7 @@ describe('test BlueprintDBService', () => {
 
         await dataStore.updateStatusBlueprintById(
             bluePrintObject.patternId,
-            StackStatus.ROLLBACK_FAILED
+            StackStatus.ROLLBACK_FAILED,
         );
 
         expect(mockDocumentClientUpdate).toBeCalledTimes(1);
@@ -286,8 +286,8 @@ describe('test BlueprintDBService', () => {
         expect(
             await dataStore.getBlueprintPublishDataByCommitId(
                 blueprintPublishObject.patternId,
-                blueprintPublishObject.commitId
-            )
+                blueprintPublishObject.commitId,
+            ),
         ).toMatchObject(blueprintPublishObject);
 
         expect(mockDocumentClientGet).toBeCalledTimes(1);
@@ -311,8 +311,8 @@ describe('test BlueprintDBService', () => {
         expect(
             await dataStore.getBlueprintPublishDataByCommitId(
                 blueprintPublishObject.patternId,
-                blueprintPublishObject.commitId
-            )
+                blueprintPublishObject.commitId,
+            ),
         ).not.toBeDefined();
     });
 

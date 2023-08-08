@@ -78,7 +78,7 @@ export class AttributeUpdateHandler extends AttributeBaseHandler {
     public constructor(
         @inject('LoggerFactory') loggerFactory: LoggerFactory,
         @inject('BlueprintDBService')
-        private readonly blueprintDBService: BlueprintDBService
+        private readonly blueprintDBService: BlueprintDBService,
     ) {
         super();
         this.logger = loggerFactory.getLogger(handlerName);
@@ -98,13 +98,13 @@ export class AttributeUpdateHandler extends AttributeBaseHandler {
         this.logger.info(`${handlerName} Update Entity Success id:${id}`);
         return BasicHttpResponse.ofObject(
             200,
-            await this.transformResult({ ...data, id })
+            await this.transformResult({ ...data, id }),
         );
     }
 
     public validateInputParameters(
         event: APIGatewayProxyEvent,
-        context: Context
+        context: Context,
     ): InputValidationResult {
         let validated = true;
         const errors: string[] = [];
@@ -112,13 +112,13 @@ export class AttributeUpdateHandler extends AttributeBaseHandler {
         if (!event?.body || !isValidJSON(event.body)) {
             validated &&= false;
             errors.push(
-                'Valid JSON payload is required in the body of the update request.'
+                'Valid JSON payload is required in the body of the update request.',
             );
         }
 
         const { validated: validatedId, errors: errorsId } = this.validateIdParameter(
             event,
-            context
+            context,
         );
         validated &&= validatedId;
         errors.push(...errorsId);
@@ -133,7 +133,7 @@ export class AttributeUpdateHandler extends AttributeBaseHandler {
 
     public async prepareData(
         event: APIGatewayProxyEvent,
-        id: string
+        id: string,
     ): Promise<Attribute> {
         // retrieve the item to update
         const checkItem = await this.blueprintDBService.getAttributeById(id);
@@ -153,7 +153,7 @@ export class AttributeUpdateHandler extends AttributeBaseHandler {
             // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw new BasicHttpError(
                 404,
-                `The key and value are not allowed to be updated. Current Key: ${checkItem.key}, Value: ${checkItem.value}`
+                `The key and value are not allowed to be updated. Current Key: ${checkItem.key}, Value: ${checkItem.value}`,
             );
         }
 

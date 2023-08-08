@@ -39,7 +39,7 @@ export class BlueprintFrontendConfig extends Construct {
     public constructor(
         scope: Construct,
         id: string,
-        props: BlueprintFrontendConfigProps
+        props: BlueprintFrontendConfigProps,
     ) {
         super(scope, id);
 

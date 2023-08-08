@@ -51,7 +51,7 @@ describe('attribute get details handler tests', () => {
 
         const handler = new AttributeGetDetailsHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
 
         const data = await handler.handle(
@@ -63,7 +63,7 @@ describe('attribute get details handler tests', () => {
                 },
                 body: '',
             }) as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         expect(data).toEqual({
@@ -97,7 +97,7 @@ describe('attribute get details handler tests', () => {
 
         const handler = new AttributeGetDetailsHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
         const id = 'TESTKEY:TESTVALUE';
 
@@ -111,8 +111,8 @@ describe('attribute get details handler tests', () => {
                     },
                     body: '',
                 }) as APIGatewayProxyEvent,
-                {} as Context
-            )
+                {} as Context,
+            ),
         ).rejects.toEqual({
             message: `Specified item is not found. id: ${id}`,
             name: 'BasicHttpError',

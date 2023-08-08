@@ -42,7 +42,12 @@ import { setupNotification } from '../../../queries/Mutation';
 import { useAppLayoutContext } from 'aws-northstar/layouts/AppLayout';
 import { v4 as uuid } from 'uuid';
 import { ROUTE_BLUEPRINT_UPDATE } from '../../../routes';
-import { NpmPackageDetails, PatternServiceCatalogProduct } from '../../../types';
+import {
+    NpmPackageDetails,
+    PERMISSION_PATTERN_MANAGE,
+    PatternServiceCatalogProduct,
+} from '../../../types';
+import HasPermission from '../../../core/HasPermission';
 
 const PatternDetails: FunctionComponent = () => {
     const context = useAppContext();
@@ -58,7 +63,7 @@ const PatternDetails: FunctionComponent = () => {
         retry: 3,
     });
 
-    const email = useMemo(() => context.email, [context]);
+    const email = useMemo(() => context.user?.email, [context]);
 
     const {
         data: subscription,
@@ -66,7 +71,8 @@ const PatternDetails: FunctionComponent = () => {
         refetch,
     } = useQuery(
         ['getsubs', blueprintId, email],
-        () => getSubscriptionQuery(blueprintId, email),
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        () => getSubscriptionQuery(blueprintId, email!),
         {
             retry: 3,
             refetchOnWindowFocus: false,
@@ -261,15 +267,17 @@ const PatternDetails: FunctionComponent = () => {
         });
 
         return (
-            <Inline>
-                <Button
-                    onClick={() => {
-                        history.push(path);
-                    }}
-                >
-                    Edit
-                </Button>
-            </Inline>
+            <HasPermission groups={PERMISSION_PATTERN_MANAGE}>
+                <Inline>
+                    <Button
+                        onClick={() => {
+                            history.push(path);
+                        }}
+                    >
+                        Edit
+                    </Button>
+                </Inline>
+            </HasPermission>
         );
     }, [blueprintId, history]);
 
@@ -318,7 +326,8 @@ const PatternDetails: FunctionComponent = () => {
                                                 onChange={(enabled) => {
                                                     subscribe.mutate({
                                                         patternId: blueprintId,
-                                                        email,
+                                                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                                                        email: email!,
                                                         subscribe: enabled,
                                                     });
                                                 }}

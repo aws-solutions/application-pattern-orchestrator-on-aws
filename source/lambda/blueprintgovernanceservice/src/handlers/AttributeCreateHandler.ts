@@ -80,7 +80,7 @@ export class AttributeCreateHandler extends AttributeBaseHandler {
     public constructor(
         @inject('LoggerFactory') loggerFactory: LoggerFactory,
         @inject('BlueprintDBService')
-        private readonly blueprintDBService: BlueprintDBService
+        private readonly blueprintDBService: BlueprintDBService,
     ) {
         super();
         this.logger = loggerFactory.getLogger(handlerName);
@@ -91,7 +91,7 @@ export class AttributeCreateHandler extends AttributeBaseHandler {
     public async process(
         event: APIGatewayProxyEvent,
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        _context: Context
+        _context: Context,
     ): Promise<ServerlessResponse> {
         const id = await this.getEntityId(event);
         this.logger.info(`${handlerName} Create Entity id:${id}`);
@@ -123,14 +123,14 @@ export class AttributeCreateHandler extends AttributeBaseHandler {
 
         return ServerlessResponse.ofObject(
             201,
-            await this.transformResult({ ...data, id })
+            await this.transformResult({ ...data, id }),
         );
     }
 
     public validateInputParameters(
         event: APIGatewayProxyEvent,
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        _context: Context
+        _context: Context,
     ): InputValidationResult {
         let validated = true;
         const errors: string[] = [];
@@ -138,7 +138,7 @@ export class AttributeCreateHandler extends AttributeBaseHandler {
         if (!event?.body || !isValidJSON(event.body)) {
             validated &&= false;
             errors.push(
-                'Valid JSON payload is required in the body of the create request.'
+                'Valid JSON payload is required in the body of the create request.',
             );
         }
         return { validated, errors };
@@ -154,7 +154,7 @@ export class AttributeCreateHandler extends AttributeBaseHandler {
             // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw new BasicHttpError(
                 400,
-                `An attribute with the specific key and value already exists.`
+                `An attribute with the specific key and value already exists.`,
             );
         }
         return id;

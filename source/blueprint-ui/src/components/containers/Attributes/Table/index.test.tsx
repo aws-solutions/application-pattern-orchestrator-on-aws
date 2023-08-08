@@ -42,6 +42,20 @@ const attributes: AttributeSummary[] = [
     },
 ];
 jest.useRealTimers();
+jest.mock('../../../core/AppContext', () => {
+    return {
+        ...jest.requireActual('../../../core/AppContext'),
+        useAppContext: jest.fn().mockImplementation(() => {
+            return {
+                user: {
+                    email: 'test@test.com',
+                    groups: ['SYSTEM_ADMIN'],
+                },
+            };
+        }),
+    };
+});
+
 describe('AttributeTable', () => {
     test('render', async () => {
         const mockOnDelete = jest.fn();

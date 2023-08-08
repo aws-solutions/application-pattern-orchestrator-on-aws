@@ -81,7 +81,7 @@ export abstract class AttributeBaseHandler
      */
     public async handle(
         event: APIGatewayProxyEvent,
-        context: Context
+        context: Context,
     ): Promise<ServerlessResponse> {
         const { validated, errors } = this.validate(event, context);
         if (validated) {
@@ -95,17 +95,17 @@ export abstract class AttributeBaseHandler
     // abstract methods that need to be implemented by each resource handle
     public abstract validateInputParameters(
         event: APIGatewayProxyEvent,
-        context: Context
+        context: Context,
     ): InputValidationResult;
 
     public abstract process(
         event: APIGatewayProxyEvent,
-        context: Context
+        context: Context,
     ): Promise<BasicHttpResponse>;
 
     public validate(
         event: APIGatewayProxyEvent,
-        context: Context
+        context: Context,
     ): InputValidationResult {
         let validated = true;
         const errors: string[] = [];
@@ -130,7 +130,7 @@ export abstract class AttributeBaseHandler
         // eslint-disable-next-line @typescript-eslint/naming-convention
         _event: APIGatewayProxyEvent,
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        _context: Context
+        _context: Context,
     ): InputValidationResult {
         return { validated: true, errors: [] };
     }
@@ -139,7 +139,7 @@ export abstract class AttributeBaseHandler
     public validateAttributeIdInputParameter(
         event: APIGatewayProxyEvent,
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        _context: Context
+        _context: Context,
     ): InputValidationResult {
         const regAttributeId = /^[-\w]{1,120}:[-\w]{1,120}$/;
         let validated = true;
@@ -151,7 +151,7 @@ export abstract class AttributeBaseHandler
         ) {
             validated &&= false;
             errors.push(
-                `Invalid attribute id. The attribute id must match ${regAttributeId}.`
+                `Invalid attribute id. The attribute id must match ${regAttributeId}.`,
             );
         }
         return { validated, errors };

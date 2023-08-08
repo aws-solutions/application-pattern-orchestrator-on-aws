@@ -58,7 +58,7 @@ export function setupContainer(router: Router<ServerlessResponse>): void {
         'DependencyConfigurationProvider',
         {
             useClass: DependencyConfigurationProvider,
-        }
+        },
     );
 
     container.register<AWS.S3>('S3', {
@@ -70,7 +70,7 @@ export function setupContainer(router: Router<ServerlessResponse>): void {
             new CodeBuildClient({
                 region: appConfiguration.region,
                 customUserAgent: customUserAgentV3,
-            })
+            }),
         ),
     });
 
@@ -79,7 +79,7 @@ export function setupContainer(router: Router<ServerlessResponse>): void {
             new CodeCommitClient({
                 region: appConfiguration.region,
                 customUserAgent: customUserAgentV3,
-            })
+            }),
         ),
     });
 
@@ -94,10 +94,13 @@ export function setupContainer(router: Router<ServerlessResponse>): void {
             ...configuration,
             httpOptions: appConfiguration.proxyUri
                 ? {
-                      agent: new HttpsProxyAgent({
-                          host: url.parseURL(appConfiguration.proxyUri)?.host?.toString(),
-                          port: url.parseURL(appConfiguration.proxyUri)?.port,
-                      }),
+                      agent: new HttpsProxyAgent(
+                          `http://${url
+                              .parseURL(appConfiguration.proxyUri)!
+                              .host!.toString()}:${url
+                              .parseURL(appConfiguration.proxyUri)!
+                              .port!.toString()}`,
+                      ),
                   }
                 : undefined,
         }),
@@ -120,14 +123,14 @@ export function setupContainer(router: Router<ServerlessResponse>): void {
             'BlueprintRepoBuilderService',
             {
                 useClass: BlueprintGitHubRepoBuilderService,
-            }
+            },
         );
     } else {
         container.register<BlueprintCodeCommitRepoBuilderService>(
             'BlueprintRepoBuilderService',
             {
                 useClass: BlueprintCodeCommitRepoBuilderService,
-            }
+            },
         );
     }
 
@@ -135,13 +138,13 @@ export function setupContainer(router: Router<ServerlessResponse>): void {
         'BlueprintPipelineBuilderService',
         {
             useClass: BlueprintPipelineBuilderService,
-        }
+        },
     );
 
     container.register<InitialiseBlueprintPipelineHandler>(
         'InitialiseBlueprintPipelineHandler',
         {
             useClass: InitialiseBlueprintPipelineHandler,
-        }
+        },
     );
 }

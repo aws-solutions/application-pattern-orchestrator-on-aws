@@ -55,7 +55,7 @@ export class BlueprintPipelineBuilderService {
      */
     public constructor(
         @inject('LoggerFactory') loggerFactory: LoggerFactory,
-        @inject('CodeBuildClient') private readonly codeBuildClient: CodeBuildClient
+        @inject('CodeBuildClient') private readonly codeBuildClient: CodeBuildClient,
     ) {
         this.logger = loggerFactory.getLogger('BlueprintPipelineBuilderService');
     }

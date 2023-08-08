@@ -25,7 +25,7 @@ export class CompliantDynamoDbTable extends Construct {
     public constructor(
         scope: Construct,
         id: string,
-        props?: CompliantDynamoDbTableProps
+        props?: CompliantDynamoDbTableProps,
     ) {
         super(scope, id);
         this.table = new ddb.Table(this, 'CompliantDdbTable', {

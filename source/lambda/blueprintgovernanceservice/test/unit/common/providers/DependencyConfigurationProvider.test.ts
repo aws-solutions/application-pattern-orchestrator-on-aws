@@ -38,7 +38,7 @@ describe('DependencyConfigurationProvider - getSecret and getSSM mock', () => {
         const dependencyConfigurationProvider: DependencyConfigurationProvider =
             new DependencyConfigurationProvider(
                 instance(testingAppConfiguration),
-                new AWS.SecretsManager()
+                new AWS.SecretsManager(),
             );
         when(testingAppConfiguration.getDepdencyFor('BLUEPRINTGOVERNANCE')).thenReturn({
             name: 'BLUEPRINTGOVERNANCE',
@@ -46,7 +46,7 @@ describe('DependencyConfigurationProvider - getSecret and getSSM mock', () => {
         });
         const value =
             await dependencyConfigurationProvider.getBlueprintServiceRepoCredentials(
-                'BLUEPRINTGOVERNANCE'
+                'BLUEPRINTGOVERNANCE',
             );
 
         expect(value).toEqual('testSecret');

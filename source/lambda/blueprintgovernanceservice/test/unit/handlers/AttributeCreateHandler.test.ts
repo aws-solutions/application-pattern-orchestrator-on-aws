@@ -41,7 +41,7 @@ describe('attribute create handler tests', () => {
 
         const handler = new AttributeCreateHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
 
         const event = {
@@ -83,7 +83,7 @@ describe('attribute create handler tests', () => {
 
         const handler = new AttributeCreateHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
 
         const event = {
@@ -101,7 +101,7 @@ describe('attribute create handler tests', () => {
                 resource: '/attributes',
                 body: JSON.stringify(event),
             }) as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         expect(data).toEqual({
@@ -128,7 +128,7 @@ describe('attribute create handler tests', () => {
 
         const handler = new AttributeCreateHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
 
         const event = {
@@ -147,8 +147,8 @@ describe('attribute create handler tests', () => {
                     resource: '/attributes',
                     body: JSON.stringify(event),
                 }) as APIGatewayProxyEvent,
-                {} as Context
-            )
+                {} as Context,
+            ),
         ).rejects.toEqual({
             message: "The key must be specified and match '/^[-\\w]{1,120}$/'.",
             name: 'BasicHttpError',
@@ -167,7 +167,7 @@ describe('attribute create handler tests', () => {
 
         const handler = new AttributeCreateHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
 
         const event = {
@@ -186,8 +186,8 @@ describe('attribute create handler tests', () => {
                     resource: '/attributes',
                     body: JSON.stringify(event),
                 }) as APIGatewayProxyEvent,
-                {} as Context
-            )
+                {} as Context,
+            ),
         ).rejects.toEqual({
             message: "The value must be specified and match '/^[-\\w]{1,120}$/'.",
             name: 'BasicHttpError',
@@ -206,7 +206,7 @@ describe('attribute create handler tests', () => {
 
         const handler = new AttributeCreateHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
 
         const event = {
@@ -223,8 +223,8 @@ describe('attribute create handler tests', () => {
                     resource: '/attributes',
                     body: JSON.stringify(event),
                 }) as APIGatewayProxyEvent,
-                {} as Context
-            )
+                {} as Context,
+            ),
         ).rejects.toEqual({
             message:
                 "The key must be specified and match '/^[-\\w]{1,120}$/'.; The value must be specified and match '/^[-\\w]{1,120}$/'.",
@@ -244,7 +244,7 @@ describe('attribute create handler tests', () => {
 
         const handler = new AttributeCreateHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
         await expect(
             handler.handle(
@@ -253,8 +253,8 @@ describe('attribute create handler tests', () => {
                     resource: '/attributes',
                     body: '',
                 }) as APIGatewayProxyEvent,
-                {} as Context
-            )
+                {} as Context,
+            ),
         ).rejects.toEqual({
             message: 'Valid JSON payload is required in the body of the create request.',
             name: 'BasicHttpError',
@@ -286,7 +286,7 @@ describe('attribute create handler tests', () => {
 
         const handler = new AttributeCreateHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
 
         const event = {
@@ -305,8 +305,8 @@ describe('attribute create handler tests', () => {
                     resource: '/attributes',
                     body: JSON.stringify(event),
                 }) as APIGatewayProxyEvent,
-                {} as Context
-            )
+                {} as Context,
+            ),
         ).rejects.toEqual({
             message: 'An attribute with the specific key and value already exists.',
             name: 'BasicHttpError',

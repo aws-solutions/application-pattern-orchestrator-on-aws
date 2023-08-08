@@ -34,10 +34,10 @@ jest.mock('path', () => ({
     resolve: jest
         .fn()
         .mockImplementationOnce(() =>
-            path.join(__dirname, '../../../../initialRepoTemplates/cfn/images')
+            path.join(__dirname, '../../../../initialRepoTemplates/cfn/images'),
         )
         .mockImplementationOnce(() =>
-            path.join(__dirname, '../../../../initialRepoTemplates/cfn/images/.gitkeep')
+            path.join(__dirname, '../../../../initialRepoTemplates/cfn/images/.gitkeep'),
         ),
 }));
 
@@ -67,11 +67,11 @@ describe('test BlueprintCodeCommitRepoBuilderService', () => {
         });
         const objectUnderTest = new BlueprintCodeCommitRepoBuilderService(
             new StaticLoggerFactory(),
-            codeCommitMockClient as unknown as CodeCommitClient
+            codeCommitMockClient as unknown as CodeCommitClient,
         );
         const response = await objectUnderTest.createAndInitializeRepo(
             repositoryName,
-            'CFN'
+            'CFN',
         );
         expect(response.branchName).toBe('master');
         expect(response.patternRepoURL).toBe(cloneUrlHttp);
@@ -83,11 +83,11 @@ describe('test BlueprintCodeCommitRepoBuilderService', () => {
         codeCommitMockClient.on(CreateRepositoryCommand).rejects('error creating repo');
         const objectUnderTest = new BlueprintCodeCommitRepoBuilderService(
             new StaticLoggerFactory(),
-            codeCommitMockClient as unknown as CodeCommitClient
+            codeCommitMockClient as unknown as CodeCommitClient,
         );
 
         await expect(
-            objectUnderTest.createAndInitializeRepo(repositoryName, 'CFN')
+            objectUnderTest.createAndInitializeRepo(repositoryName, 'CFN'),
         ).rejects.toBeInstanceOf(BlueprintError);
     });
 
@@ -99,11 +99,11 @@ describe('test BlueprintCodeCommitRepoBuilderService', () => {
         });
         const objectUnderTest = new BlueprintCodeCommitRepoBuilderService(
             new StaticLoggerFactory(),
-            codeCommitMockClient as unknown as CodeCommitClient
+            codeCommitMockClient as unknown as CodeCommitClient,
         );
 
         await expect(
-            objectUnderTest.createAndInitializeRepo(repositoryName, 'CFN')
+            objectUnderTest.createAndInitializeRepo(repositoryName, 'CFN'),
         ).rejects.toBeInstanceOf(BlueprintError);
     });
 
@@ -127,10 +127,10 @@ describe('test BlueprintCodeCommitRepoBuilderService', () => {
             .rejects('error creating initial commit');
         const objectUnderTest = new BlueprintCodeCommitRepoBuilderService(
             new StaticLoggerFactory(),
-            codeCommitMockClient as unknown as CodeCommitClient
+            codeCommitMockClient as unknown as CodeCommitClient,
         );
         await expect(
-            objectUnderTest.createAndInitializeRepo(repositoryName, 'CFN')
+            objectUnderTest.createAndInitializeRepo(repositoryName, 'CFN'),
         ).rejects.toBeInstanceOf(BlueprintError);
         expect(codeCommitMockClient).toHaveReceivedCommand(DeleteRepositoryCommand);
     });

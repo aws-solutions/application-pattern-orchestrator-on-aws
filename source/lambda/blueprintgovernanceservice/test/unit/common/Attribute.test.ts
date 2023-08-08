@@ -138,8 +138,8 @@ describe('attribute helper tests', () => {
 
         await expect(syncAttribute('TEST_ATTR_1_KEY:TEST_ATTR_1_VALUE')).rejects.toEqual(
             new Error(
-                `Specified attribute is not found. id: TEST_ATTR_1_KEY:TEST_ATTR_1_VALUE`
-            )
+                `Specified attribute is not found. id: TEST_ATTR_1_KEY:TEST_ATTR_1_VALUE`,
+            ),
         );
     });
 });

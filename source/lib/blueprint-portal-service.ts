@@ -136,7 +136,7 @@ export class BlueprintPortalService extends Construct {
                         'codecommit:DeleteRepository',
                     ],
                     resources: [`arn:aws:codecommit:${Aws.REGION}:${Aws.ACCOUNT_ID}:*`],
-                })
+                }),
             );
         }
         const lambdaEnvironmentVariables: Record<string, string> = {
@@ -201,8 +201,8 @@ export class BlueprintPortalService extends Construct {
             code: Code.fromAsset(
                 path.resolve(
                     __dirname,
-                    `../lambda/${bgsFunctionName}/dist/${bgsFunctionName}`
-                )
+                    `../lambda/${bgsFunctionName}/dist/${bgsFunctionName}`,
+                ),
             ),
             description: 'Blueprint Governance Runtime Governance Lambda',
             timeout: Duration.seconds(60),
@@ -282,7 +282,7 @@ export class BlueprintPortalService extends Construct {
             {
                 resourceArn: `arn:aws:apigateway:${Aws.REGION}::/restapis/${this.blueprintapi.api.restApiId}/stages/${this.blueprintapi.api.deploymentStage.stageName}`,
                 webAclArn: wafRegionalWebAcl.webAcl.attrArn,
-            }
+            },
         );
 
         cfnWebACLAssociation.node.addDependency(this.blueprintapi);
@@ -301,7 +301,7 @@ export class BlueprintPortalService extends Construct {
                     reason: 'Most Permissions are added by CDK implicitly.',
                 },
             ],
-            'DefaultPolicy'
+            'DefaultPolicy',
         );
         addCfnNagSuppression(this.bgsFunction.lambdaExecutionRole, [
             {
@@ -331,8 +331,8 @@ export class BlueprintPortalService extends Construct {
                         id: 'W5',
                         reason: 'Security group is created by CDK and is egress only',
                     },
-                ]
-            )
+                ],
+            ),
         );
     }
 }

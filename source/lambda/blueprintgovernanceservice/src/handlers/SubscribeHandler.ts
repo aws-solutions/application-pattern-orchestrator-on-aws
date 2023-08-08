@@ -56,19 +56,19 @@ export class SubscribeHandler
     implements AsyncRequestHandler<APIGatewayProxyEvent, ServerlessResponse>
 {
     public constructor(
-        @inject('BlueprintDBService') private readonly db: BlueprintDBService
+        @inject('BlueprintDBService') private readonly db: BlueprintDBService,
     ) {}
 
     public async handle(
         event: APIGatewayProxyEvent,
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        _context: Context
+        _context: Context,
     ): Promise<ServerlessResponse> {
         try {
             if (!event.body) {
                 return ServerlessResponse.ofObject(
                     400,
-                    'Request body must contain valid JSON.'
+                    'Request body must contain valid JSON.',
                 );
             }
 
@@ -77,7 +77,7 @@ export class SubscribeHandler
             if (!input.patternId) {
                 return ServerlessResponse.ofObject(
                     400,
-                    'patternId must not be null or empty.'
+                    'patternId must not be null or empty.',
                 );
             }
 
@@ -90,13 +90,13 @@ export class SubscribeHandler
                 case 'POST':
                     await this.db.createNotificationSubscription(
                         input.patternId,
-                        input.email
+                        input.email,
                     );
                     return ServerlessResponse.ofObject(201, {});
                 case 'DELETE':
                     await this.db.deleteNotificationSubscription(
                         input.patternId,
-                        input.email
+                        input.email,
                     );
                     return ServerlessResponse.ofObject(200, {});
                 default:
@@ -107,7 +107,7 @@ export class SubscribeHandler
                 // json parse error
                 return ServerlessResponse.ofObject(
                     400,
-                    'Request body must contain valid JSON.'
+                    'Request body must contain valid JSON.',
                 );
             }
             throw error;

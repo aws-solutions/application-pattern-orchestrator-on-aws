@@ -27,37 +27,37 @@ export class DependencyConfigurationProvider {
     public constructor(
         @inject('AppConfiguration') private readonly applicationConfig: AppConfiguration,
         @inject('SecretsManager')
-        private readonly secretsManager: SecretsManager
+        private readonly secretsManager: SecretsManager,
     ) {}
 
     public getMandatoryDependency(
-        depedencyServiceName: DependencyServiceName
+        depedencyServiceName: DependencyServiceName,
     ): Dependency {
         const dependency = this.applicationConfig.getDepdencyFor(depedencyServiceName);
         if (!dependency?.githubTokenSecretId) {
             // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw new BlueprintError(
                 `Invalid configuration - No ${depedencyServiceName} dependency configured - githubTokenSecretId needs to be configured`,
-                503
+                503,
             );
         }
         return dependency;
     }
 
     public async getBlueprintServiceRepoCredentials(
-        depedencyServiceName: DependencyServiceName
+        depedencyServiceName: DependencyServiceName,
     ): Promise<string> {
         try {
             const dependency = this.getMandatoryDependency(depedencyServiceName);
             return await this.getSecretsValue(
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                dependency.githubTokenSecretId!
+                dependency.githubTokenSecretId!,
             );
         } catch (e) {
             // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw new BlueprintError(
                 `Invalid configuration - Error while retrieve getBlueprintServiceRepoCredentials on ${depedencyServiceName} dependency configured from secrets manager`,
-                503
+                503,
             );
         }
     }

@@ -31,7 +31,7 @@ export class BlueprintArtifactApiDefinition extends Construct {
     public constructor(
         scope: Construct,
         id: string,
-        props: BlueprintArtifactApiDefinitionProps
+        props: BlueprintArtifactApiDefinitionProps,
     ) {
         super(scope, id);
 

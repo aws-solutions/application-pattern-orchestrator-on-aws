@@ -199,7 +199,7 @@ export class AWSRestApi extends Construct {
                     reason: 'Its a false positive.',
                 },
             ],
-            true
+            true,
         );
         NagSuppressions.addResourceSuppressions(
             this.api,
@@ -209,7 +209,7 @@ export class AWSRestApi extends Construct {
                     reason: 'CloudWatchRole needs managed policy AmazonAPIGatewayPushToCloudWatchLogs',
                 },
             ],
-            true
+            true,
         );
 
         const authorizer = new CfnAuthorizer(scope, 'CognitoAuth', {
@@ -252,7 +252,7 @@ export class AWSRestApi extends Construct {
                     reason: 'The REST API does not have request validation enabled - This is configured at Lambda layer level',
                 },
             ],
-            true
+            true,
         );
 
         if (props.enableProxyAll !== false) {
@@ -277,7 +277,7 @@ export class AWSRestApi extends Construct {
                 {
                     resourceArn: `arn:${Aws.PARTITION}:apigateway:${Aws.REGION}::/restapis/${this.api.restApiId}/stages/prod`,
                     webAclArn: props.apiGatewayWebAclArn,
-                }
+                },
             );
             webACLAssociation.node.addDependency(this.api);
         }
@@ -301,19 +301,19 @@ export class AWSRestApi extends Construct {
 
 function addResourceThrows(): Resource {
     throw new Error(
-        "Cannot call 'addResource' on a proxying AGSRestApi; set 'enableProxyAll' to false"
+        "Cannot call 'addResource' on a proxying AGSRestApi; set 'enableProxyAll' to false",
     );
 }
 
 function addMethodThrows(): Method {
     throw new Error(
-        "Cannot call 'addMethod' on a proxying AGSRestApi; set 'enableProxyAll' to false"
+        "Cannot call 'addMethod' on a proxying AGSRestApi; set 'enableProxyAll' to false",
     );
 }
 
 function addProxyThrows(): ProxyResource {
     throw new Error(
-        "Cannot call 'addProxy' on a proxying AGSRestApi; set 'enableProxyAll' to false"
+        "Cannot call 'addProxy' on a proxying AGSRestApi; set 'enableProxyAll' to false",
     );
 }
 

@@ -28,6 +28,7 @@ import {
     IdentityProviderInfo,
     LogLevelType,
     PatternType,
+    SecurityScanTool,
     WafInfo,
 } from './blueprint-types';
 import { BlueprintFrontendConfig } from './blueprint-frontend-config';
@@ -47,6 +48,7 @@ export interface BlueprintStackProps extends StackProps {
     readonly customUserAgent: string;
     readonly removalPolicy: RemovalPolicy;
     readonly logLevel: LogLevelType;
+    readonly securityScanTool: SecurityScanTool;
     readonly cognitoDomainPrefix?: string;
     readonly identityProviderInfo?: IdentityProviderInfo;
     readonly vpcCidr?: string;
@@ -96,7 +98,7 @@ export class BlueprintStack extends Stack {
         if (props.githubConfig) {
             this.setupSourceCredentials(
                 props.githubConfig.githubTokenSecretId,
-                props.githubConfig.githubUrl
+                props.githubConfig.githubUrl,
             );
         }
 
@@ -111,7 +113,7 @@ export class BlueprintStack extends Stack {
         const blueprintInfra = new BlueprintBaseInfra(
             this,
             'RapmBaseInfra',
-            blueprintBaseInfraProps
+            blueprintBaseInfraProps,
         );
 
         const anonymousDataUUID = this.createOperationalMetrics(
@@ -119,7 +121,7 @@ export class BlueprintStack extends Stack {
             blueprintInfra.vpc,
             patternTypeParam.valueAsString as PatternType,
             props.removalPolicy,
-            props.logLevel
+            props.logLevel,
         );
 
         const blueprintFrontend = new BlueprintFrontend(this, 'RapmFrontend', {
@@ -166,6 +168,7 @@ export class BlueprintStack extends Stack {
             wafInfo: props.wafInfo,
             removalPolicy: props.removalPolicy,
             logLevel: props.logLevel,
+            securityScanTool: props.securityScanTool,
         });
 
         new BlueprintFrontendConfig(this, 'RapmFrontendConfig', {
@@ -222,7 +225,7 @@ export class BlueprintStack extends Stack {
 
     private setupSourceCredentials(
         githubTokenSecretId: string,
-        githubUrl?: string
+        githubUrl?: string,
     ): void {
         githubUrl
             ? new GitHubEnterpriseSourceCredentials(
@@ -230,7 +233,7 @@ export class BlueprintStack extends Stack {
                   'GitHubEnterpriseSourceCredentials',
                   {
                       accessToken: SecretValue.secretsManager(githubTokenSecretId),
-                  }
+                  },
               )
             : new GitHubSourceCredentials(this, 'GitHubSourceCredentials', {
                   accessToken: SecretValue.secretsManager(githubTokenSecretId),
@@ -242,7 +245,7 @@ export class BlueprintStack extends Stack {
         vpc: IVpc,
         patternType: PatternType,
         removalPolicy: RemovalPolicy,
-        logLevel: LogLevelType
+        logLevel: LogLevelType,
     ): string {
         const opMetrics = new OperationalMetricsCollection(
             this,
@@ -258,7 +261,7 @@ export class BlueprintStack extends Stack {
                 },
                 patternType: patternType,
                 logLevel,
-            }
+            },
         );
 
         return opMetrics.anonymousDataUUID;

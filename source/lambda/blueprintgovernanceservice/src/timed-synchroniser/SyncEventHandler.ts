@@ -33,7 +33,7 @@ export class SyncEventHandler
         // eslint-disable-next-line @typescript-eslint/naming-convention
         _event: EventType,
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        _context: Context
+        _context: Context,
     ): Promise<BasicHttpResponse> {
         this.logger.info('Timed Synchroniser Started.');
         // sync attributes
@@ -62,7 +62,7 @@ export class SyncEventHandler
 }
 
 export async function getAttributes(
-    nextToken: string | undefined
+    nextToken: string | undefined,
 ): Promise<[Attribute[], string]> {
     const blueprintDBService =
         container.resolve<BlueprintDBService>('BlueprintDBService');

@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.0] - 2023-08-08
+
+### Added
+
+- Integrated CfnGuard and Checkov as additional IaC scanning tools for pattern validation.
+- Added user role based access to the solution UI
+
+### Fixed
+
+- Pull request comments max size issue.
+
 ## [1.1.0] - 2023-05-03
 
 ### Added

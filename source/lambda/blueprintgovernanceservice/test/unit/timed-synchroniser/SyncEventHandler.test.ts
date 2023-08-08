@@ -27,7 +27,7 @@ class BlueprintDbServiceMockWithAttributes {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         limit?: number,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        nextToken?: string
+        nextToken?: string,
     ): Promise<[Attribute[], string]> {
         return [
             [
@@ -62,7 +62,7 @@ class BlueprintDbServiceMockWithNoAttributes {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         limit?: number,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        nextToken?: string
+        nextToken?: string,
     ): Promise<[Attribute[], string]> {
         return [[], ''];
     }
@@ -86,7 +86,7 @@ describe('SyncEventHandler test', () => {
         mockAddSyncRequestToQueue.mockResolvedValue({});
         const result = await handler.handle(
             {} as EventBridgeEvent<string, unknown>,
-            {} as Context
+            {} as Context,
         );
         expect(result).toEqual({
             body: 'SUCCEED',
@@ -107,7 +107,7 @@ describe('SyncEventHandler test', () => {
 
         const result = await handler.handle(
             {} as EventBridgeEvent<string, unknown>,
-            {} as Context
+            {} as Context,
         );
 
         expect(result).toEqual({

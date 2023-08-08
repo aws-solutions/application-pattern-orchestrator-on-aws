@@ -51,7 +51,7 @@ export class BlueprintDBService {
      */
     public constructor(
         @inject('DocumentClient')
-        private readonly documentClient: AWS.DynamoDB.DocumentClient
+        private readonly documentClient: AWS.DynamoDB.DocumentClient,
     ) {
         this.rapmMetaDataTableName =
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -83,7 +83,7 @@ export class BlueprintDBService {
      */
     public async listBlueprints(
         limit?: number,
-        nextToken?: string
+        nextToken?: string,
     ): Promise<PaginatedResult<BlueprintObject[]>> {
         const params = {
             TableName: this.rapmMetaDataTableName,
@@ -122,7 +122,7 @@ export class BlueprintDBService {
      */
     public async getBlueprintPublishDataByCommitId(
         patternId: string,
-        commitId: string
+        commitId: string,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ): Promise<any | undefined> {
         const params = {
@@ -148,7 +148,7 @@ export class BlueprintDBService {
      */
     public async updateStatusBlueprintById(
         id: string,
-        patternPipelineInfraStatus: string
+        patternPipelineInfraStatus: string,
     ): Promise<void> {
         const params = {
             TableName: this.rapmMetaDataTableName,
@@ -175,7 +175,7 @@ export class BlueprintDBService {
     public async updateBlueprintMetaData(
         id: string,
         description: string,
-        attributes?: Record<string, string>
+        attributes?: Record<string, string>,
     ): Promise<void> {
         const params = {
             TableName: this.rapmMetaDataTableName,
@@ -240,7 +240,7 @@ export class BlueprintDBService {
      */
     public async listAttributes(
         limit?: number,
-        nextToken?: string
+        nextToken?: string,
     ): Promise<[Attribute[], string]> {
         const params = {
             TableName: this.rapmAttributesTableName,
@@ -269,7 +269,7 @@ export class BlueprintDBService {
 
     public async createNotificationSubscription(
         patternId: string,
-        email: string
+        email: string,
     ): Promise<void> {
         await this.documentClient
             .put({
@@ -281,7 +281,7 @@ export class BlueprintDBService {
 
     public async deleteNotificationSubscription(
         patternId: string,
-        email: string
+        email: string,
     ): Promise<void> {
         await this.documentClient
             .delete({
@@ -293,7 +293,7 @@ export class BlueprintDBService {
 
     public async getNotificationSubscription(
         patternId: string,
-        email: string
+        email: string,
     ): Promise<Record<string, unknown> | undefined> {
         const item = await this.documentClient
             .get({

@@ -27,8 +27,8 @@ const output = fs.createWriteStream(
         process.cwd(),
         '..',
         'blueprint-infrastructure-asset',
-        'blueprint-infrastructure.zip'
-    )
+        'blueprint-infrastructure.zip',
+    ),
 );
 
 const archive = archiver('zip');

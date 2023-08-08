@@ -44,12 +44,12 @@ async function deleteCodebuildGithubWebhook(projectName: string): Promise<void> 
     await codebuildClient.send(
         new DeleteWebhookCommand({
             projectName,
-        })
+        }),
     );
 }
 
 async function createCodebuildGithubWebhook(
-    projectName: string
+    projectName: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<OctokitResponse<any>> {
     const { webhook } = await codebuildClient.send(
@@ -64,7 +64,7 @@ async function createCodebuildGithubWebhook(
                     },
                 ],
             ],
-        })
+        }),
     );
 
     if (!webhook?.payloadUrl) {
@@ -78,7 +78,7 @@ async function getGithubToken(): Promise<string> {
     const { SecretString } = await secretsManagerClient.send(
         new GetSecretValueCommand({
             SecretId: GITHUB_TOKEN_SECRET_ID,
-        })
+        }),
     );
 
     if (!SecretString) {
@@ -90,7 +90,7 @@ async function getGithubToken(): Promise<string> {
 
 async function createGithubWebhook(
     payloadUrl: string,
-    secret: string | undefined
+    secret: string | undefined,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<OctokitResponse<any>> {
     const githubToken = await getGithubToken();
@@ -129,8 +129,8 @@ export async function handler(event: CloudFormationCustomResourceEvent): Promise
             const response = await createCodebuildGithubWebhook(PROJECT_NAME);
             logger.info(
                 `Successfully created Codebuild Github webhook: ${JSON.stringify(
-                    response
-                )}`
+                    response,
+                )}`,
             );
         } catch (err) {
             logger.error(`Could not create webhook: ${JSON.stringify(err)}`);
@@ -139,7 +139,7 @@ export async function handler(event: CloudFormationCustomResourceEvent): Promise
                 await deleteCodebuildGithubWebhook(PROJECT_NAME);
             } catch (err2) {
                 logger.error(
-                    `Could not delete Codebuild Github webhook: ${JSON.stringify(err2)}`
+                    `Could not delete Codebuild Github webhook: ${JSON.stringify(err2)}`,
                 );
             }
             throw new Error(`Could not create Codebuild Github webhook: ${err}`);
@@ -151,7 +151,7 @@ export async function handler(event: CloudFormationCustomResourceEvent): Promise
         } catch (err) {
             // Ignore webhook clean up failures
             logger.error(
-                `Could not delete Codebuild Github webhook: ${JSON.stringify(err)}`
+                `Could not delete Codebuild Github webhook: ${JSON.stringify(err)}`,
             );
         }
     }

@@ -181,4 +181,17 @@ export interface AttributeDetailProps {
 
 export interface User {
     email: string;
+    groups?: UserGroup[];
 }
+
+export enum UserGroup {
+    SYSTEM_ADMIN = 'SYSTEM_ADMIN',
+    PATTERN_PUBLISHER = 'PATTERN_PUBLISHER',
+}
+
+export const PERMISSION_PATTERN_MANAGE = [
+    UserGroup.PATTERN_PUBLISHER,
+    UserGroup.SYSTEM_ADMIN,
+];
+
+export const PERMISSION_ATTRIBUTE_MANAGE = [UserGroup.SYSTEM_ADMIN];
