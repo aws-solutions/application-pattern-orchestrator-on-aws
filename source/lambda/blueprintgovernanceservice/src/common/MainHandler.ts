@@ -42,7 +42,7 @@ export class MainHandler {
                 appConfig.applicationName,
                 container,
                 appConfig.runningLocally,
-                appConfig.logLevel
+                appConfig.logLevel,
             ),
             responseFormatter<APIGatewayProxyEvent, BasicHttpResponse>(),
             errorLogger<APIGatewayProxyEvent, BasicHttpResponse>(),
@@ -52,14 +52,14 @@ export class MainHandler {
         // main lambda handler
         this.lambdaHandler = new MiddlewareChain<APIGatewayProxyEvent, BasicHttpResponse>(
             router,
-            middlewares
+            middlewares,
         ).lambdaHandler;
     }
 }
 
 function errorLogger<TEvent, TResponse>(): middy.MiddlewareObj<TEvent, TResponse> {
     const onError: middy.MiddlewareFn<TEvent, TResponse> = async (
-        request
+        request,
     ): Promise<void> => {
         const logger = getLogger('ErrorLoggingMiddleware');
 

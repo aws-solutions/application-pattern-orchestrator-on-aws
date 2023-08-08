@@ -85,14 +85,14 @@ export class BlueprintBaseInfra extends Construct {
         if (props.githubDomain && props.githubDomainResolverIpAddresses) {
             this.createOutboundResolverEndpoint(
                 props.githubDomain,
-                props.githubDomainResolverIpAddresses
+                props.githubDomainResolverIpAddresses,
             );
         }
     }
 
     private createOutboundResolverEndpoint(
         githubDomain: string,
-        githubDomainResolverIpAddresses: string
+        githubDomainResolverIpAddresses: string,
     ): void {
         const subnets = this.vpc.selectSubnets({
             subnetType: SubnetType.PRIVATE_WITH_EGRESS,
@@ -121,13 +121,13 @@ export class BlueprintBaseInfra extends Construct {
         outboundResolverSg.addIngressRule(
             ec2.Peer.ipv4(this.vpc.vpcCidrBlock),
             ec2.Port.tcp(53),
-            'Allow outbound TCP DNS queries from VPC peering'
+            'Allow outbound TCP DNS queries from VPC peering',
         );
 
         outboundResolverSg.addIngressRule(
             ec2.Peer.ipv4(this.vpc.vpcCidrBlock),
             ec2.Port.udp(53),
-            'Allow outbound UDP DNS queries from VPC peering'
+            'Allow outbound UDP DNS queries from VPC peering',
         );
 
         const outboundResolver = new route53resolver.CfnResolverEndpoint(
@@ -138,7 +138,7 @@ export class BlueprintBaseInfra extends Construct {
                 ipAddresses: subnetIds,
                 securityGroupIds: [outboundResolverSg.securityGroupId],
                 name: 'outboundResolverEndpoint',
-            }
+            },
         );
 
         const targetIps = githubDomainResolverIpAddresses.split(',').map((targetIp) => ({
@@ -156,7 +156,7 @@ export class BlueprintBaseInfra extends Construct {
             {
                 resolverRuleId: resolverRule.attrResolverRuleId,
                 vpcId: this.vpc.vpcId,
-            }
+            },
         );
     }
 }
@@ -288,7 +288,7 @@ export class InfraConfig extends Construct {
                     'kms:Decrypt',
                 ],
                 resources: ['*'],
-            })
+            }),
         );
 
         const logGroup = new LogGroup(this, 'VpcFlowLogs', {
@@ -324,7 +324,7 @@ export class InfraConfig extends Construct {
                     'kms:Describe*',
                 ],
                 resources: [encryptionKey.keyArn],
-            })
+            }),
         );
 
         NagSuppressions.addResourceSuppressions(logGroupPolicy, [

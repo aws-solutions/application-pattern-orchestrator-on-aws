@@ -42,7 +42,7 @@ const maxAttributeMetaLength = 8000 - 1000; // 1000 reserved for key and value
 export const payloadValidator = (
     event: APIGatewayProxyEvent,
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    _context: Context
+    _context: Context,
 ): InputValidationResult => {
     const payload = JSON.parse(event.body || '{}');
     let validated = true;
@@ -62,7 +62,7 @@ export const payloadValidator = (
     if (payload.description && isInvalidArgument(regDescription, payload.description)) {
         validated &&= false;
         errors.push(
-            `The description is optional but if specified it must match '${regDescription.toString()}'.`
+            `The description is optional but if specified it must match '${regDescription.toString()}'.`,
         );
     }
 

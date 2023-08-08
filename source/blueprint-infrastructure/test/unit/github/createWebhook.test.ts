@@ -77,7 +77,7 @@ describe('Create Codebuild Github webhook handler tests', () => {
                     secret: 'secret',
                     url: 'payloadUrl',
                 },
-            })
+            }),
         );
     });
 
@@ -95,7 +95,7 @@ describe('Create Codebuild Github webhook handler tests', () => {
                 ResourceProperties: {
                     PROJECT_NAME: 'codeBuildProject',
                 },
-            } as unknown as CloudFormationCustomResourceEvent)
+            } as unknown as CloudFormationCustomResourceEvent),
         ).rejects.toThrow();
         expect(cbMock.calls()).toHaveLength(2);
         expect(cbMock.call(0).firstArg).toBeInstanceOf(CreateWebhookCommand);

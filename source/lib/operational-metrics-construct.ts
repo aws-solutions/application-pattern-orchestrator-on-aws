@@ -46,14 +46,14 @@ export class OperationalMetricsCollection extends Construct {
     public constructor(
         scope: Construct,
         id: string,
-        props: OperationalMetricsCollectionProps
+        props: OperationalMetricsCollectionProps,
     ) {
         super(scope, id);
 
         const lambda = new NodejsFunction(this, 'operational-metrics-handler', {
             entry: path.join(
                 __dirname,
-                '../lambda/blueprintgovernanceservice/src/metrics/OperationalMetricHandler.ts'
+                '../lambda/blueprintgovernanceservice/src/metrics/OperationalMetricHandler.ts',
             ),
             handler: 'handler',
             description: 'Lambda for Operational Metrics collection',
@@ -73,7 +73,7 @@ export class OperationalMetricsCollection extends Construct {
                     reason: 'Uses service role - AWSLambdaVPCAccessExecutionRole and AWSLambdaBasicExecutionRole',
                 },
             ],
-            true
+            true,
         );
 
         addCfnNagSuppression(lambda, [
@@ -96,7 +96,7 @@ export class OperationalMetricsCollection extends Construct {
                     id: 'W5',
                     reason: 'Security group is created by CDK and is egress only',
                 },
-            ])
+            ]),
         );
 
         const provider = new cr.Provider(this, 'Provider', {
@@ -119,7 +119,7 @@ export class OperationalMetricsCollection extends Construct {
                     reason: 'This lambda runtime is implicitly selected by AWS CDK',
                 },
             ],
-            true
+            true,
         );
 
         const {
@@ -142,7 +142,7 @@ export class OperationalMetricsCollection extends Construct {
                     retainData,
                     patternType,
                 },
-            }
+            },
         );
 
         this.anonymousDataUUID = customResource.getAttString('anonymousDataUUID');

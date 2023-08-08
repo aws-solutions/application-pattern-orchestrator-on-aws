@@ -30,7 +30,7 @@ export class AppRegistry extends Construct implements cdk.IAspect {
     public constructor(
         scope: Construct,
         id: string,
-        private readonly props: AppRegistryProps
+        private readonly props: AppRegistryProps,
     ) {
         super(scope, id);
     }
@@ -71,11 +71,11 @@ export class AppRegistry extends Construct implements cdk.IAspect {
         cdk.Tags.of(application).add('Solutions:SolutionName', this.props.solutionName);
         cdk.Tags.of(application).add(
             'Solutions:SolutionVersion',
-            this.props.solutionVersion
+            this.props.solutionVersion,
         );
         cdk.Tags.of(application).add(
             'Solutions:ApplicationType',
-            this.props.applicationType
+            this.props.applicationType,
         );
     }
 

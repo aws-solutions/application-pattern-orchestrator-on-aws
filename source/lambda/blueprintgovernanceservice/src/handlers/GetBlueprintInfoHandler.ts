@@ -111,7 +111,7 @@ export class GetBlueprintInfoHandler
     public constructor(
         @inject('LoggerFactory') loggerFactory: LoggerFactory,
         @inject('BlueprintDBService')
-        private readonly blueprintDBService: BlueprintDBService
+        private readonly blueprintDBService: BlueprintDBService,
     ) {
         this.logger = loggerFactory.getLogger('GetBlueprintRequestHandler');
     }
@@ -125,7 +125,7 @@ export class GetBlueprintInfoHandler
     public async handle(
         event: APIGatewayProxyEvent,
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        _context: Context
+        _context: Context,
     ): Promise<ServerlessResponse> {
         this.logger.debug('Processing get pattern details request');
 
@@ -136,7 +136,7 @@ export class GetBlueprintInfoHandler
             });
         }
         const patternMetaData = await this.blueprintDBService.getBlueprintById(
-            event.pathParameters.id
+            event.pathParameters.id,
         );
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -149,7 +149,7 @@ export class GetBlueprintInfoHandler
             blueprintLastCommitPublishData =
                 await this.blueprintDBService.getBlueprintPublishDataByCommitId(
                     event.pathParameters.id,
-                    patternMetaData.lastCommitId
+                    patternMetaData.lastCommitId,
                 );
             responseObject['lastCommitPublishData'] = blueprintLastCommitPublishData;
         }

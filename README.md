@@ -178,7 +178,15 @@ By default, all solution data (S3 buckets, DynamoDB tables) will be removed when
 
 **Identity Provider configuration (optional)**
 
-Users can sign into the solution web UI either directly through the user pool, or federate through a third-party identity provider (IdP) that supports OpenID Connect authentication. To federate through a third-party identity provider via OpenID Connect, add the following parameters to `source/cdk.json`:
+Users can sign into the solution web UI either directly through the user pool, or federate through a third-party identity provider (IdP) that supports OpenID Connect authentication. 
+
+The solution by default creates two user groups in Amazon Cognito user pool:
+- SYSTEM_ADMIN: This user group has permissions to access all pages in the UI. The default user created by the solution is automatically added to this group when the solution is deployed. 
+- PATTERN_PUBLISHER: This group has permissions to create, update and view patterns. This group also allows you to view pattern attributes. To update or delete pattern attributes you would need to be in SYSTEM_ADMIN group.     
+
+If you are federating through a third-party identity provider via OpenID Connect, please add a claim type of `group` in your IdP and map the roles that should relate to `SYSTEM_ADMIN` and `PATTERN_PUBLISHER` roles in Amazon Cognito. In absence of this mapping the federated user would only have read only access to the solution UI.
+
+To federate through a third-party identity provider via OpenID Connect, add the following parameters to `source/cdk.json`:
 
 ```
 "identityProviderInfo": {
@@ -202,10 +210,13 @@ Example: Identity provider configuration to federate through Auth0.
     "oidcIssuer": "https://dev-abcdefgx.us.auth0.com",
     "attributeMapping": {
       "email": "EMAIL",
-      "username": "sub"
+      "username": "sub",
+      "custom:groups": "groups"
     }
   }
 ```
+
+It's important to note that if you want to use user groups from your IdP please make sure you add `attributeMapping` to map your groups claim name with `custom:groups` (as in the example above).
 
 **AWS WAF configuration (optional)**
 
@@ -230,6 +241,35 @@ Example WAF Configuration:
     "wafCloudFrontWebAclArn": "arn:aws:wafv2:us-east-1:xxxxxxxxxxxx:global/webacl/CloudFront-ACL-Test/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 }
 ```
+
+**Security scanning tool configuration (optional)**
+
+This solution uses [CfnNag](https://github.com/stelligent/cfn_nag) as the default IaC security scanning tool. In addition to CfnNag, this solution also supports below security scanning tools:
+
+- [AWS CloudFormation Guard](https://github.com/aws-cloudformation/cloudformation-guard):
+AWS CloudFormation Guard is a policy-as-code evaluation tool that is open source and can be used for checking the security posture of AWS CloudFormation templates. The solution also supports [AWS Rule Registry](https://github.com/aws-cloudformation/aws-guard-rules-registry) and allows users to configure [managed rule sets](https://github.com/aws-cloudformation/aws-guard-rules-registry#managed-rule-sets) against which the CloudFormation templates should be evaluated. 
+
+- [Checkov](https://www.checkov.io/): 
+Checkov is another policy-as-code security evaluation tool which has over 1000 built in policies that covers security and compliance best practices for AWS
+
+If you need to configure it, add this information to `source/cdk.json`.
+
+```
+"securityScanTool": {
+    "name": "<Security scan tool name. Valid values are CfnNag, CfnGuard, Checkov>",
+    "cfnGuardManagedRuleSets": [(This is optional and only applicable if the name property is 'CfnGuard'. If not specified it defaults to 'wa-Security-Pillar' and 'wa-Reliability-Pillar'). A list of AWS managed rule sets against which the security posture of CloudFormation template needs to be evaluated.]
+}
+```
+
+Example securityScanTool configuration:
+
+```
+"securityScanTool": {
+    "name": "CfnGuard",
+    "cfnGuardManagedRuleSets": [ "wa-Security-Pillar" ]
+}
+```
+
 
 ### Build and deploy
 

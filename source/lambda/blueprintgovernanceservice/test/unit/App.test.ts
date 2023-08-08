@@ -40,7 +40,7 @@ describe('Test compliance event', () => {
                 resource: '/patterns',
             } as APIGatewayProxyEvent,
             {} as Context,
-            () => ({})
+            () => ({}),
         );
         expect(CreateBlueprintRequestHandler.prototype.handle).toHaveBeenCalled();
     });
@@ -57,7 +57,7 @@ describe('Test compliance event', () => {
                 resource: '/patterns',
             } as APIGatewayProxyEvent,
             {} as Context,
-            () => ({})
+            () => ({}),
         );
         expect(GetAllBlueprintsRequestHandler.prototype.handle).toHaveBeenCalled();
     });
@@ -73,7 +73,7 @@ describe('Test compliance event', () => {
                 resource: '/patterns/{id}',
             } as APIGatewayProxyEvent,
             {} as Context,
-            () => ({})
+            () => ({}),
         );
         expect(GetBlueprintInfoHandler.prototype.handle).toHaveBeenCalled();
     });
@@ -91,7 +91,7 @@ describe('Test compliance event', () => {
                 resource: '/patterns/pipeline/{id}',
             } as APIGatewayProxyEvent,
             {} as Context,
-            () => ({})
+            () => ({}),
         );
         expect(InitialiseBlueprintPipelineHandler.prototype.handle).toHaveBeenCalled();
     });
@@ -108,7 +108,7 @@ describe('Test compliance event', () => {
                 resource: '/attributes',
             } as APIGatewayProxyEvent,
             {} as Context,
-            () => ({})
+            () => ({}),
         );
         expect(AttributeCreateHandler.prototype.handle).toHaveBeenCalled();
     });
@@ -123,7 +123,7 @@ describe('Test compliance event', () => {
                 resource: '/attributes',
             } as APIGatewayProxyEvent,
             {} as Context,
-            () => ({})
+            () => ({}),
         );
         expect(AttributeListHandler.prototype.handle).toHaveBeenCalled();
     });
@@ -139,7 +139,7 @@ describe('Test compliance event', () => {
                 resource: '/attributes/{id}',
             } as APIGatewayProxyEvent,
             {} as Context,
-            () => ({})
+            () => ({}),
         );
         expect(AttributeGetDetailsHandler.prototype.handle).toHaveBeenCalled();
     });
@@ -155,7 +155,7 @@ describe('Test compliance event', () => {
                 resource: '/attributes/{id}',
             } as APIGatewayProxyEvent,
             {} as Context,
-            () => ({})
+            () => ({}),
         );
         expect(AttributeUpdateHandler.prototype.handle).toHaveBeenCalled();
     });
@@ -171,7 +171,7 @@ describe('Test compliance event', () => {
                 resource: '/attributes/{id}',
             } as APIGatewayProxyEvent,
             {} as Context,
-            () => ({})
+            () => ({}),
         );
         expect(AttributeDeleteHandler.prototype.handle).toHaveBeenCalled();
     });

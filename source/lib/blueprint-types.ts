@@ -104,6 +104,7 @@ export interface BlueprintInfraSharedConfig {
     solutionName: string;
     solutionTradeMarkName: string;
     logLevel: LogLevelType;
+    securityScanTool: SecurityScanTool;
     githubConfig?: GithubConfigBlueprintInfraSharedConfig;
     codeCommitConfig?: CodeCommitConfig;
 }
@@ -125,3 +126,10 @@ export interface WafInfo {
 }
 
 export type PatternRepoType = 'CodeCommit' | 'GitHub';
+
+export interface SecurityScanTool {
+    name: SecurityScanToolName;
+    cfnGuardManagedRuleSets?: string[];
+}
+
+export type SecurityScanToolName = 'CfnGuard' | 'CfnNag' | 'Checkov';

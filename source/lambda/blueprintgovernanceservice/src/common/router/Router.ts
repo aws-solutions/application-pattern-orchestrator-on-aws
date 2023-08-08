@@ -30,7 +30,7 @@ export class Router<TResponse extends BasicHttpResponse>
 
     public addRoute<THandler extends AsyncHandlerObj<APIGatewayProxyEvent, TResponse>>(
         predicate: (event: APIGatewayProxyEvent) => boolean,
-        handlerToken: InjectionToken<THandler>
+        handlerToken: InjectionToken<THandler>,
     ): Router<TResponse> {
         this.routes.push({ predicate, handlerToken: handlerToken });
         return this;
@@ -38,7 +38,7 @@ export class Router<TResponse extends BasicHttpResponse>
 
     public handle(
         event: APIGatewayProxyEvent,
-        context: Context
+        context: Context,
     ): Promise<BasicHttpResponse> {
         const route = this.routes.find((r) => r.predicate(event));
 
@@ -53,9 +53,9 @@ export class Router<TResponse extends BasicHttpResponse>
                 new BasicHttpError(
                     404,
                     `Could not find a matching route for ${event.httpMethod} ${event.resource} ${event.path}`,
-                    false
-                )
-            )
+                    false,
+                ),
+            ),
         );
     }
 }

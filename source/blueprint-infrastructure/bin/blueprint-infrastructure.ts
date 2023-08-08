@@ -32,7 +32,7 @@ const blueprintId: string = app.node.tryGetContext('blueprintId');
 const blueprintType: BlueprintType = app.node.tryGetContext('blueprintType');
 
 const blueprintInfrastructureSharedConfigJson = app.node.tryGetContext(
-    'blueprintInfrastructureSharedConfigJson'
+    'blueprintInfrastructureSharedConfigJson',
 );
 
 const repositoryName = app.node.tryGetContext('repositoryName');
@@ -65,7 +65,7 @@ if (githubConnectionArn && githubRepositoryOwner) {
 const infraStack = new BlueprintInfrastructureStack(
     app,
     `BlueprintInfrastructureStack${blueprintId}`,
-    blueprintInfraStackProps
+    blueprintInfraStackProps,
 );
 Aspects.of(infraStack).add(new CfnNagCustomResourceSuppressionAspect());
 Aspects.of(infraStack).add(new CfnNagServiceRoleDefaultPolicyResourceSuppressionAspect());

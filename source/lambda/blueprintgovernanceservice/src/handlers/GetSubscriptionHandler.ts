@@ -41,13 +41,13 @@ export class GetSubscriptionHandler
     implements AsyncRequestHandler<APIGatewayProxyEvent, ServerlessResponse>
 {
     public constructor(
-        @inject('BlueprintDBService') private readonly db: BlueprintDBService
+        @inject('BlueprintDBService') private readonly db: BlueprintDBService,
     ) {}
 
     public async handle(
         event: APIGatewayProxyEvent,
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        _context: Context
+        _context: Context,
     ): Promise<ServerlessResponse> {
         const patternId = event.queryStringParameters?.['patternId'];
         const email = event.queryStringParameters?.['email'];
@@ -55,7 +55,7 @@ export class GetSubscriptionHandler
         if (!patternId || !email) {
             return ServerlessResponse.ofObject(
                 400,
-                'patternId and email must not be null or empty.'
+                'patternId and email must not be null or empty.',
             );
         }
 

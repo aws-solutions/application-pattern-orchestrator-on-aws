@@ -33,7 +33,7 @@ export class LambdaLoggerFactory<TEvent, TContext> implements LoggerFactory {
             string,
             (event: TEvent, context: TContext) => string
         >,
-        private readonly logLevel?: LogLevelType
+        private readonly logLevel?: LogLevelType,
     ) {}
 
     public static customTransports(): Transport[] {
@@ -60,7 +60,7 @@ export class LambdaLoggerFactory<TEvent, TContext> implements LoggerFactory {
                 winston.format.splat(),
                 this.runLocally
                     ? winston.format.prettyPrint({ colorize: true })
-                    : winston.format.json()
+                    : winston.format.json(),
             ),
             level: logLevel ?? this.logLevel ?? DEFAULT_LOG_LEVEL,
         });
@@ -75,7 +75,7 @@ export class StaticLoggerFactory implements LoggerFactory {
                 winston.format.label({ label: name }),
                 winston.format.timestamp(),
                 winston.format.splat(),
-                winston.format.json()
+                winston.format.json(),
             ),
             level: logLevel ?? DEFAULT_LOG_LEVEL,
         });

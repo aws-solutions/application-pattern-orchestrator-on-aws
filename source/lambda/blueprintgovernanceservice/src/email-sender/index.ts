@@ -59,14 +59,14 @@ export interface RAPMMessage {
 
 export async function handler(
     event: lambda.SNSEvent,
-    context: lambda.Context
+    context: lambda.Context,
 ): Promise<void> {
     const logger = getLogger('email-sender');
 
     logger.debug(
         `Processing event ${JSON.stringify(event)} with context ${JSON.stringify(
-            context
-        )}`
+            context,
+        )}`,
     );
 
     // parsing the sns message
@@ -93,7 +93,7 @@ export async function handler(
             if (x.serviceCatalog) {
                 const serviceCatalogProducts = x.serviceCatalog.products.map(
                     (p) => `<li>Service Catalog product name: ${p}</li>
-                `
+                `,
                 );
                 patternDestination = `
                 <ul>
@@ -133,10 +133,10 @@ export async function handler(
                 `Sending an email from ${fromEmail} to ${recipients
                     .map((x) => x)
                     .join(
-                        ', '
+                        ', ',
                     )} using teamplate name ${templateName} with teampate data ${JSON.stringify(
-                    templateData
-                )}`
+                    templateData,
+                )}`,
             );
 
             const batches = splitIntoBatches(recipients, 50); // making sure the list of recipients is within SES limit
@@ -150,14 +150,14 @@ export async function handler(
                             Source: fromEmail,
                             Destination: { ToAddresses: b },
                             TemplateData: JSON.stringify(templateData),
-                        })
+                        }),
                     );
                     /* eslint-enable @typescript-eslint/naming-convention */
 
                     logger.debug(`Send email result ${JSON.stringify(sendResult)}`);
-                })
+                }),
             );
-        })
+        }),
     );
 }
 
@@ -183,7 +183,7 @@ async function getRecipientsForPattern(patternId: string): Promise<string[]> {
             ExpressionAttributeValues: {
                 ':patternId': { S: patternId },
             },
-        })
+        }),
         /* eslint-enable @typescript-eslint/naming-convention */
     );
 

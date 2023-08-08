@@ -96,7 +96,7 @@ describe('test CreateBlueprintRequestHandler', () => {
         blueprintRepoBuilderService.createAndInitializeRepo =
             blueprintRepoBuilderServiceHandle;
         blueprintRepoBuilderServiceHandle.mockReturnValue(
-            githubCreateAndInitialiseRepoResponse
+            githubCreateAndInitialiseRepoResponse,
         );
 
         const blueprintPipelineBuilderService = mock(BlueprintPipelineBuilderService);
@@ -114,7 +114,7 @@ describe('test CreateBlueprintRequestHandler', () => {
             new StaticLoggerFactory(),
             blueprintDBService,
             blueprintRepoBuilderService,
-            blueprintPipelineBuilderService
+            blueprintPipelineBuilderService,
         );
         // act
         const output = await objectUnderTest.handle(
@@ -122,7 +122,7 @@ describe('test CreateBlueprintRequestHandler', () => {
                 body: JSON.stringify(testInputRequest),
                 headers: { ttl: new Date().getTime().toString() },
             } as unknown as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
         expect(sendAnonymousMetricSpy).toBeCalledWith({
             anonymousDataUUID: 'c0cc07de-d239-4ed9-92b6-cf7c82027aeb',
@@ -147,7 +147,7 @@ describe('test CreateBlueprintRequestHandler', () => {
             new StaticLoggerFactory(),
             blueprintDBService,
             blueprintRepoBuilderService,
-            blueprintPipelineBuilderService
+            blueprintPipelineBuilderService,
         );
         // act
         const output = await objectUnderTest.handle(
@@ -155,7 +155,7 @@ describe('test CreateBlueprintRequestHandler', () => {
                 body: JSON.stringify(inputRequest),
                 headers: { ttl: new Date().getTime().toString() },
             } as unknown as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
         expect(output).toBeDefined();
         // assert
@@ -173,7 +173,7 @@ describe('test CreateBlueprintRequestHandler', () => {
         blueprintRepoBuilderService.createAndInitializeRepo =
             blueprintRepoBuilderServiceCreateRepoAndInit;
         blueprintRepoBuilderServiceCreateRepoAndInit.mockRejectedValueOnce(
-            new Error('Unable to create repo')
+            new Error('Unable to create repo'),
         );
         const blueprintPipelineBuilderService = mock(BlueprintPipelineBuilderService);
 
@@ -181,7 +181,7 @@ describe('test CreateBlueprintRequestHandler', () => {
             new StaticLoggerFactory(),
             blueprintDBService,
             blueprintRepoBuilderService,
-            blueprintPipelineBuilderService
+            blueprintPipelineBuilderService,
         );
         // act
         const output = await objectUnderTest.handle(
@@ -190,7 +190,7 @@ describe('test CreateBlueprintRequestHandler', () => {
                 pathParameters: { id: '123' },
                 headers: { ttl: new Date().getTime().toString() },
             } as unknown as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
         expect(output).toBeDefined();
         // assert
@@ -237,7 +237,7 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
         blueprintRepoBuilderService.createAndInitializeRepo =
             blueprintRepoBuilderServiceHandle;
         blueprintRepoBuilderServiceHandle.mockReturnValue(
-            githubCreateAndInitialiseRepoResponse
+            githubCreateAndInitialiseRepoResponse,
         );
 
         const blueprintPipelineBuilderService = mock(BlueprintPipelineBuilderService);
@@ -251,7 +251,7 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
             new StaticLoggerFactory(),
             blueprintDBService,
             blueprintRepoBuilderService,
-            blueprintPipelineBuilderService
+            blueprintPipelineBuilderService,
         );
         // act
         const output = await objectUnderTest.handle(
@@ -259,7 +259,7 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
                 body: JSON.stringify(testInputRequest),
                 headers: { ttl: new Date().getTime().toString() },
             } as unknown as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
         expect(output).toBeDefined();
         expect(output.statusCode).toBe(400);
@@ -274,7 +274,7 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
         blueprintRepoBuilderService.createAndInitializeRepo =
             blueprintRepoBuilderServiceHandle;
         blueprintRepoBuilderServiceHandle.mockReturnValue(
-            githubCreateAndInitialiseRepoResponse
+            githubCreateAndInitialiseRepoResponse,
         );
         const createBlueprintHandle = jest.fn();
         blueprintDBService.createBlueprint = createBlueprintHandle;
@@ -286,14 +286,14 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
             new StaticLoggerFactory(),
             blueprintDBService,
             blueprintRepoBuilderService,
-            blueprintPipelineBuilderService
+            blueprintPipelineBuilderService,
         );
         // act
         const output = await objectUnderTest.handle(
             {
                 headers: { ttl: new Date().getTime().toString() },
             } as unknown as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
         expect(output).toBeDefined();
         // assert
@@ -310,7 +310,7 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
         blueprintRepoBuilderService.createAndInitializeRepo =
             blueprintRepoBuilderServiceHandle;
         blueprintRepoBuilderServiceHandle.mockReturnValue(
-            githubCreateAndInitialiseRepoResponse
+            githubCreateAndInitialiseRepoResponse,
         );
         const createBlueprintHandle = jest.fn();
         blueprintDBService.createBlueprint = createBlueprintHandle;
@@ -321,14 +321,14 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
         blueprintPipelineBuilderService.invokeCodeBuildProject =
             blueprintPipelineBuilderServiceHandle;
         blueprintPipelineBuilderServiceHandle.mockRejectedValueOnce(
-            new Error('Error invoking codebuild')
+            new Error('Error invoking codebuild'),
         );
 
         const objectUnderTest = new CreateBlueprintRequestHandler(
             new StaticLoggerFactory(),
             blueprintDBService,
             blueprintRepoBuilderService,
-            blueprintPipelineBuilderService
+            blueprintPipelineBuilderService,
         );
         // act
         const output = await objectUnderTest.handle(
@@ -336,7 +336,7 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
                 body: JSON.stringify(inputRequest),
                 headers: { ttl: new Date().getTime().toString() },
             } as unknown as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
         expect(output).toBeDefined();
         expect(blueprintPipelineBuilderService.invokeCodeBuildProject).toHaveBeenCalled();
@@ -361,7 +361,7 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
 
             blueprintDBService,
             blueprintRepoBuilderService,
-            blueprintPipelineBuilderService
+            blueprintPipelineBuilderService,
         );
         // act
         const output = await objectUnderTest.handle(
@@ -369,7 +369,7 @@ describe('test CreateBlueprintRequestHandler error flow', () => {
                 body: JSON.stringify(blueprintRequest),
                 headers: { ttl: new Date().getTime().toString() },
             } as unknown as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         // assert

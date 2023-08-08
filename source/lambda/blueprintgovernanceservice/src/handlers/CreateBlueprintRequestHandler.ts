@@ -110,13 +110,13 @@ export class CreateBlueprintRequestHandler
         @inject('BlueprintRepoBuilderService')
         private readonly blueprintRepoBuilderService: IBlueprintRepoBuilderService,
         @inject('BlueprintPipelineBuilderService')
-        private readonly blueprintPipelineBuilderService: BlueprintPipelineBuilderService
+        private readonly blueprintPipelineBuilderService: BlueprintPipelineBuilderService,
     ) {
         this.logger = loggerFactory.getLogger('CreateBlueprintRequestHandler');
     }
 
     private async validateInputData(
-        input: CreateBlueprintRequest
+        input: CreateBlueprintRequest,
     ): Promise<ServerlessResponse | undefined> {
         if (input.name.length > 40 || input.name.match(/[^a-z0-9-_]/g)) {
             return ServerlessResponse.ofObject(400, {
@@ -163,7 +163,7 @@ export class CreateBlueprintRequestHandler
      */
     public async handle(
         event: APIGatewayProxyEvent,
-        _context: Context
+        _context: Context,
     ): Promise<ServerlessResponse> {
         this.logger.debug(`Processing create pattern request ${JSON.stringify(event)}`);
 
@@ -188,13 +188,13 @@ export class CreateBlueprintRequestHandler
             blueprintCodeRepoDetails =
                 await this.blueprintRepoBuilderService.createAndInitializeRepo(
                     blueprintName,
-                    input.patternType
+                    input.patternType,
                 );
         } catch (e) {
             this.logger.error(
                 `Error in creating/initialising pattern repo ${blueprintName}, failed with error: ${JSON.stringify(
-                    e
-                )}`
+                    e,
+                )}`,
             );
 
             return ServerlessResponse.ofObject(500, {
@@ -227,21 +227,21 @@ export class CreateBlueprintRequestHandler
 
         try {
             this.logger.debug(
-                'blueprintPipelineBuilderService invokeCodeBuildProject initialization'
+                'blueprintPipelineBuilderService invokeCodeBuildProject initialization',
             );
             await this.blueprintPipelineBuilderService.invokeCodeBuildProject(
-                blueprintObject
+                blueprintObject,
             );
             this.logger.debug(
-                'blueprintPipelineBuilderService invokeCodeBuildProject successful'
+                'blueprintPipelineBuilderService invokeCodeBuildProject successful',
             );
         } catch (e) {
             blueprintObject.infrastructureStackStatus = StackStatus.CREATE_FAILED;
 
             this.logger.error(
                 `blueprintPipelineBuilderService invokeCodeBuildProject failed ${JSON.stringify(
-                    e
-                )}`
+                    e,
+                )}`,
             );
 
             await this.blueprintDBService.createBlueprint(blueprintObject);
@@ -269,7 +269,7 @@ export class CreateBlueprintRequestHandler
     }
 
     private async validateAttributes(
-        attributes: Record<string, string>
+        attributes: Record<string, string>,
     ): Promise<ServerlessResponse | undefined> {
         const invalidAttributeName: string[] = [];
 
@@ -291,7 +291,7 @@ export class CreateBlueprintRequestHandler
         if (invalidAttributeName.length > 0) {
             return ServerlessResponse.ofObject(400, {
                 'Error Message': `Some attributes specified are not valid. Invalid Attributes: ${invalidAttributeName.join(
-                    ','
+                    ',',
                 )}`,
             });
         }

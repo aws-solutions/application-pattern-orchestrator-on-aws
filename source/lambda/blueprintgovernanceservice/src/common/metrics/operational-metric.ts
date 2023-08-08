@@ -48,7 +48,7 @@ export async function sendAnonymousMetric(payload: MetricsPayload): Promise<stri
         logger.info(`Sending anonymous metric ${JSON.stringify(payloadStr)}`);
         const response = await axios.post(METRICS_ENDPOINT, payloadStr, config);
         logger.info(
-            `Anonymous metric response: ${response.statusText} (${response.status})`
+            `Anonymous metric response: ${response.statusText} (${response.status})`,
         );
         return 'Succeeded';
     } catch (err) {

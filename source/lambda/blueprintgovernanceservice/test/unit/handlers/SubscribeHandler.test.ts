@@ -35,7 +35,7 @@ describe('Subscribe and Unsubscribe handler tests', () => {
         // act
         const result = await handler.handle(
             { body: '<html></html>' } as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         // assert
@@ -46,7 +46,7 @@ describe('Subscribe and Unsubscribe handler tests', () => {
         // act
         const result = await handler.handle(
             { body: JSON.stringify({ test: 'value' }) } as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         // assert
@@ -59,7 +59,7 @@ describe('Subscribe and Unsubscribe handler tests', () => {
             {
                 body: JSON.stringify({ patternId: 'value', email: 'invalid email' }),
             } as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         // assert
@@ -75,7 +75,7 @@ describe('Subscribe and Unsubscribe handler tests', () => {
                     email: 'mytestemail@test.com',
                 }),
             } as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         // assert
@@ -85,7 +85,7 @@ describe('Subscribe and Unsubscribe handler tests', () => {
     test('can create new notification subscription', async () => {
         // arrange
         when(
-            db.createNotificationSubscription('1234', 'mytestemail@test.com')
+            db.createNotificationSubscription('1234', 'mytestemail@test.com'),
         ).thenResolve();
 
         // act
@@ -97,7 +97,7 @@ describe('Subscribe and Unsubscribe handler tests', () => {
                 }),
                 httpMethod: 'POST',
             } as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         // assert
@@ -107,7 +107,7 @@ describe('Subscribe and Unsubscribe handler tests', () => {
     test('can delete notification subscription', async () => {
         // arrange
         when(
-            db.deleteNotificationSubscription('1234', 'mytestemail@test.com')
+            db.deleteNotificationSubscription('1234', 'mytestemail@test.com'),
         ).thenResolve();
 
         // act
@@ -119,7 +119,7 @@ describe('Subscribe and Unsubscribe handler tests', () => {
                 }),
                 httpMethod: 'DELETE',
             } as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         // assert

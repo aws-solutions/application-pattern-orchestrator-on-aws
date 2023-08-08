@@ -87,7 +87,7 @@ describe('test GetBlueprintInfoHandler', () => {
         const objectUnderTest = new InitialiseBlueprintPipelineHandler(
             new StaticLoggerFactory(),
             blueprintDBService,
-            blueprintPipelineBuilderService
+            blueprintPipelineBuilderService,
         );
         expect(
             await objectUnderTest.handle(
@@ -96,8 +96,8 @@ describe('test GetBlueprintInfoHandler', () => {
                     pathParameters: { id: '123' },
                     headers: { ttl: new Date().getTime().toString() },
                 } as unknown as APIGatewayProxyEvent,
-                {} as Context
-            )
+                {} as Context,
+            ),
         ).toBeDefined();
     });
 });

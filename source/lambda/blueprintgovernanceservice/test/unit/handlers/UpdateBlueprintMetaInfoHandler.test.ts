@@ -79,7 +79,7 @@ describe('test CreateBlueprintRequestHandler', () => {
 
         const objectUnderTest = new UpdateBlueprintMetaInfoHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
         // act
         const output = await objectUnderTest.handle(
@@ -90,7 +90,7 @@ describe('test CreateBlueprintRequestHandler', () => {
                 body: JSON.stringify(inputRequestPayload),
                 headers: { ttl: new Date().getTime().toString() },
             } as unknown as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         // assert
@@ -101,7 +101,7 @@ describe('test CreateBlueprintRequestHandler', () => {
         expect(updateBlueprintMetaDataHandle).toHaveBeenCalledWith(
             'test-pattern',
             inputRequestPayload.description,
-            inputRequestPayload.attributes
+            inputRequestPayload.attributes,
         );
     });
 
@@ -109,7 +109,7 @@ describe('test CreateBlueprintRequestHandler', () => {
         const blueprintDBService = mock(BlueprintDBService);
         const objectUnderTest = new UpdateBlueprintMetaInfoHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
         // act
         const output = await objectUnderTest.handle(
@@ -120,7 +120,7 @@ describe('test CreateBlueprintRequestHandler', () => {
                 body: undefined,
                 headers: { ttl: new Date().getTime().toString() },
             } as unknown as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         // assert
@@ -131,7 +131,7 @@ describe('test CreateBlueprintRequestHandler', () => {
         const blueprintDBService = mock(BlueprintDBService);
         const objectUnderTest = new UpdateBlueprintMetaInfoHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
         // act
         const output = await objectUnderTest.handle(
@@ -139,7 +139,7 @@ describe('test CreateBlueprintRequestHandler', () => {
                 body: JSON.stringify(inputRequestPayload),
                 headers: { ttl: new Date().getTime().toString() },
             } as unknown as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         // assert

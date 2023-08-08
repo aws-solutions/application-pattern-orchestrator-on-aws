@@ -30,7 +30,7 @@ export interface CfnNagRuleSuppression {
  */
 export const addCfnNagSuppressionMeta = (
     construct: CfnResource,
-    rulesToSuppress: CfnNagRuleSuppression[]
+    rulesToSuppress: CfnNagRuleSuppression[],
 ): void => {
     construct.cfnOptions.metadata = {
         ...construct.cfnOptions.metadata,
@@ -47,7 +47,7 @@ export const addCfnNagSuppressionMeta = (
 export const addCfnNagSuppression = (
     construct: Construct,
     rulesToSuppress: CfnNagRuleSuppression[],
-    resourceName?: string
+    resourceName?: string,
 ): void => {
     const child = resourceName ? construct.node.findChild(resourceName) : construct;
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -60,11 +60,11 @@ export class CfnNagCustomResourceSuppressionAspect implements IAspect {
     public visit(construct: Construct): void {
         if (
             construct.node.path.endsWith(
-                '/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler'
+                '/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler',
             ) ||
             construct.node.path.endsWith('Provider/framework-onEvent/Resource') ||
             construct.node.path.match(
-                /\/Custom::CDKBucketDeployment[0-9A-Za-z]+\/Resource$/
+                /\/Custom::CDKBucketDeployment[0-9A-Za-z]+\/Resource$/,
             ) ||
             construct.node.path.match(/\/LogRetention[0-9A-Za-z]+\/Resource$/)
         ) {
@@ -103,7 +103,7 @@ export class CfnNagServiceRoleDefaultPolicyResourceSuppressionAspect implements 
 export class CfnNagResourcePathEndingWithSuppressionAspect implements IAspect {
     public constructor(
         private readonly resourcePathEndingWith: string,
-        private readonly rulesToSuppress: CfnNagRuleSuppression[]
+        private readonly rulesToSuppress: CfnNagRuleSuppression[],
     ) {}
 
     public visit(construct: Construct): void {
@@ -116,7 +116,7 @@ export class CfnNagResourcePathEndingWithSuppressionAspect implements IAspect {
 export class CfnNagResourcePathRegexSuppressionAspect implements IAspect {
     public constructor(
         private readonly resourcePathEndingWith: RegExp,
-        private readonly rulesToSuppress: CfnNagRuleSuppression[]
+        private readonly rulesToSuppress: CfnNagRuleSuppression[],
     ) {}
 
     public visit(construct: Construct): void {

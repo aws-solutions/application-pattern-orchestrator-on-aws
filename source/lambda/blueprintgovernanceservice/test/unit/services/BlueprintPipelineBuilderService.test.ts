@@ -87,10 +87,10 @@ describe('test GetBlueprintInfoHandler', () => {
         s3.putObject = s3putObjectHandle;
         const objectUnderTest = new BlueprintPipelineBuilderService(
             new StaticLoggerFactory(),
-            codeBuildClient
+            codeBuildClient,
         );
         expect(
-            await objectUnderTest.invokeCodeBuildProject(blueprintObject)
+            await objectUnderTest.invokeCodeBuildProject(blueprintObject),
         ).toBeDefined();
     });
 });

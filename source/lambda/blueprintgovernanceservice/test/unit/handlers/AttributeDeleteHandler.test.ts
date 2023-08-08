@@ -84,7 +84,7 @@ describe('attribute delete handler tests', () => {
 
         const handler = new AttributeDeleteHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
 
         const id = 'TESTKEY:TESTVALUE';
@@ -97,7 +97,7 @@ describe('attribute delete handler tests', () => {
                 },
                 body: '',
             }) as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         expect(data).toEqual({
@@ -131,7 +131,7 @@ describe('attribute delete handler tests', () => {
 
         const handler = new AttributeDeleteHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
         const id = 'TESTKEY:TESTVALUE';
 
@@ -145,8 +145,8 @@ describe('attribute delete handler tests', () => {
                     },
                     body: '',
                 }) as APIGatewayProxyEvent,
-                {} as Context
-            )
+                {} as Context,
+            ),
         ).rejects.toEqual({
             message: `Specified attribute is not found. id: ${id}`,
             name: 'BasicHttpError',
@@ -187,7 +187,7 @@ describe('attribute delete handler tests', () => {
 
         const handler = new AttributeDeleteHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
 
         await expect(
@@ -200,8 +200,8 @@ describe('attribute delete handler tests', () => {
                     },
                     body: '',
                 }) as APIGatewayProxyEvent,
-                {} as Context
-            )
+                {} as Context,
+            ),
         ).rejects.toEqual({
             message:
                 'Specified attribute is in use and can not be deleted. id: TESTKEY:TESTVALUE',

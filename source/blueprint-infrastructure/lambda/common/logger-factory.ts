@@ -31,7 +31,7 @@ export class StaticLoggerFactory implements LoggerFactory {
                 winston.format.label({ label: name }),
                 winston.format.timestamp(),
                 winston.format.splat(),
-                winston.format.json()
+                winston.format.json(),
             ),
             level: logLevel ?? DEFAULT_LOG_LEVEL,
         });

@@ -156,14 +156,14 @@ describe('Publish CFN blueprint handler tests', () => {
 
     test('streamToString', async () => {
         const response = await publishModule.streamToString(
-            fs.createReadStream(path.resolve(__dirname, 'publish.test.ts'))
+            fs.createReadStream(path.resolve(__dirname, 'publish.test.ts')),
         );
         expect(response).toContain("test('streamToString')");
     });
 
     test('handler should fail when cfn template cannot be parsed', async () => {
         jest.spyOn(publishModule, 'streamToString').mockReturnValue(
-            Promise.resolve(fixtureDynamoDbCfnTemplateJunk)
+            Promise.resolve(fixtureDynamoDbCfnTemplateJunk),
         );
         s3Mock.on(ListObjectsCommand).resolves({
             Contents: [
@@ -191,7 +191,7 @@ describe('Publish CFN blueprint handler tests', () => {
                         },
                     },
                 } as unknown as CodePipelineEvent,
-                {} as Context
+                {} as Context,
             );
 
         await expect(() => task()).rejects.toThrow();
@@ -200,21 +200,21 @@ describe('Publish CFN blueprint handler tests', () => {
     test('createProduct should throw error when create product command fails', async () => {
         scMock.on(CreateProductCommand).rejects('InvalidParametersException');
         jest.spyOn(publishModule, 'streamToString').mockReturnValue(
-            Promise.resolve(JSON.stringify(fixtureDynamoDbCfnTemplateJson))
+            Promise.resolve(JSON.stringify(fixtureDynamoDbCfnTemplateJson)),
         );
         await expect(async () => {
             await publishModule.createProduct(
                 'package-test1',
                 '1.1.1',
                 'https://test.com/package-test1',
-                'test description'
+                'test description',
             );
         }).rejects.toThrowError('InvalidParametersException');
     });
 
     test('do nothing if user parameters is empty', async () => {
         jest.spyOn(publishModule, 'streamToString').mockReturnValue(
-            Promise.resolve(JSON.stringify(fixtureDynamoDbCfnTemplateJson))
+            Promise.resolve(JSON.stringify(fixtureDynamoDbCfnTemplateJson)),
         );
         await publishModule.handler(
             {
@@ -229,13 +229,13 @@ describe('Publish CFN blueprint handler tests', () => {
                     },
                 },
             } as CodePipelineEvent,
-            {} as Context
+            {} as Context,
         );
     });
 
     test('do nothing if version name is empty', async () => {
         jest.spyOn(publishModule, 'streamToString').mockReturnValue(
-            Promise.resolve(JSON.stringify(fixtureDynamoDbCfnTemplateJson))
+            Promise.resolve(JSON.stringify(fixtureDynamoDbCfnTemplateJson)),
         );
         await publishModule.handler(
             {
@@ -252,7 +252,7 @@ describe('Publish CFN blueprint handler tests', () => {
                     },
                 },
             } as CodePipelineEvent,
-            {} as Context
+            {} as Context,
         );
         expect(cpMock.calls()).toHaveLength(1);
         expect(cpMock.call(0).firstArg).toBeInstanceOf(PutJobSuccessResultCommand);
@@ -261,7 +261,7 @@ describe('Publish CFN blueprint handler tests', () => {
 
     test('create a product if it does not already exist', async () => {
         jest.spyOn(publishModule, 'streamToString').mockReturnValue(
-            Promise.resolve(fixtureDynamoDbCfnTemplateYml)
+            Promise.resolve(fixtureDynamoDbCfnTemplateYml),
         );
         scMock.on(DescribeProductAsAdminCommand).rejects({
             name: 'ResourceNotFoundException',
@@ -296,7 +296,7 @@ describe('Publish CFN blueprint handler tests', () => {
                     },
                 },
             } as CodePipelineEvent,
-            {} as Context
+            {} as Context,
         );
         expect(cloudFormationClientMock.calls()).toHaveLength(1);
         expect(s3Mock.calls()).toHaveLength(3);
@@ -304,7 +304,7 @@ describe('Publish CFN blueprint handler tests', () => {
         expect(scMock.call(0).firstArg).toBeInstanceOf(DescribeProductAsAdminCommand);
         expect(scMock.call(1).firstArg).toBeInstanceOf(CreateProductCommand);
         expect(scMock.call(2).firstArg).toBeInstanceOf(
-            AssociateProductWithPortfolioCommand
+            AssociateProductWithPortfolioCommand,
         );
         expect(cpMock.calls()).toHaveLength(1);
         expect(cpMock.call(0).firstArg).toBeInstanceOf(PutJobSuccessResultCommand);
@@ -314,9 +314,9 @@ describe('Publish CFN blueprint handler tests', () => {
                 Buffer.from(
                     cpMock.call(0).firstArg?.input?.outputVariables
                         ?.CHANGED_SERVICE_CATALOG_PRODUCTS,
-                    'base64'
-                ).toString()
-            )
+                    'base64',
+                ).toString(),
+            ),
         ).toEqual([
             {
                 name: `${BLUEPRINT_ID}_${TEMPLATE_NAME}`,
@@ -330,7 +330,7 @@ describe('Publish CFN blueprint handler tests', () => {
 
     test('should fail the pipeline when creating product fails', async () => {
         jest.spyOn(publishModule, 'streamToString').mockReturnValue(
-            Promise.resolve(JSON.stringify(fixtureDynamoDbCfnTemplateJson))
+            Promise.resolve(JSON.stringify(fixtureDynamoDbCfnTemplateJson)),
         );
         scMock.on(DescribeProductAsAdminCommand).resolves({
             ProductViewDetail: { ProductViewSummary: { ProductId: '123' } },
@@ -357,7 +357,7 @@ describe('Publish CFN blueprint handler tests', () => {
                                     UserParameters: JSON.stringify({
                                         CHANGED_PACKAGES:
                                             Buffer.from(CHANGED_PACKAGES).toString(
-                                                'base64'
+                                                'base64',
                                             ),
                                         ALL_PACKAGES:
                                             Buffer.from(ALL_PACKAGES).toString('base64'),
@@ -367,7 +367,7 @@ describe('Publish CFN blueprint handler tests', () => {
                         },
                     },
                 } as CodePipelineEvent,
-                {} as Context
+                {} as Context,
             );
 
         await expect(() => task()).rejects.toThrow();
@@ -377,7 +377,7 @@ describe('Publish CFN blueprint handler tests', () => {
 
     test('create a product version if product already exists', async () => {
         jest.spyOn(publishModule, 'streamToString').mockReturnValue(
-            Promise.resolve(JSON.stringify(fixtureDynamoDbCfnTemplateJson))
+            Promise.resolve(JSON.stringify(fixtureDynamoDbCfnTemplateJson)),
         );
         scMock.on(DescribeProductAsAdminCommand).resolves({
             ProductViewDetail: { ProductViewSummary: { ProductId: '123' } },
@@ -411,7 +411,7 @@ describe('Publish CFN blueprint handler tests', () => {
                     },
                 },
             } as CodePipelineEvent,
-            {} as Context
+            {} as Context,
         );
         expect(cloudFormationClientMock.calls()).toHaveLength(1);
         expect(scMock.calls()).toHaveLength(3);
@@ -424,9 +424,9 @@ describe('Publish CFN blueprint handler tests', () => {
                 Buffer.from(
                     cpMock.call(0).firstArg?.input?.outputVariables
                         ?.CHANGED_SERVICE_CATALOG_PRODUCTS,
-                    'base64'
-                ).toString()
-            )
+                    'base64',
+                ).toString(),
+            ),
         ).toEqual([
             {
                 name: `${BLUEPRINT_ID}_${TEMPLATE_NAME}`,

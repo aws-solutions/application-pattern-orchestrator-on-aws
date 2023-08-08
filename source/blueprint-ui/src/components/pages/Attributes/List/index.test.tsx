@@ -35,6 +35,19 @@ jest.mock('aws-northstar/layouts/AppLayout', () => ({
         addNotification: mockAddNotificationFn,
     }),
 }));
+jest.mock('../../../core/AppContext', () => {
+    return {
+        ...jest.requireActual('../../../core/AppContext'),
+        useAppContext: jest.fn().mockImplementation(() => {
+            return {
+                user: {
+                    email: 'test@test.com',
+                    groups: ['SYSTEM_ADMIN'],
+                },
+            };
+        }),
+    };
+});
 const mockedUseQuery = useQuery as jest.Mock<any>;
 const mockedUseMutation = useMutation as jest.Mock<any>;
 

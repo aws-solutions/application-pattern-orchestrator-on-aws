@@ -22,7 +22,7 @@ import { sendAnonymousMetric } from '../common/metrics/operational-metric';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function handler(
-    event: CloudFormationCustomResourceEvent
+    event: CloudFormationCustomResourceEvent,
 ): Promise<CloudFormationCustomResourceSuccessResponse> {
     const {
         awsSolutionId,

@@ -23,7 +23,7 @@ import { IBlueprintRepoBuilderService } from '../../src/service/blueprint-repo-b
 
 const router = new Router().addRoute(
     (e) => e.httpMethod === 'POST' && e.resource == '/blueprints',
-    CreateBlueprintRequestHandler
+    CreateBlueprintRequestHandler,
 );
 
 describe('test request handler registration', () => {
@@ -58,9 +58,9 @@ describe('test request handler registration', () => {
         expect(
             (
                 container.resolve(
-                    'BlueprintRepoBuilderService'
+                    'BlueprintRepoBuilderService',
                 ) as IBlueprintRepoBuilderService
-            ).constructor.name
+            ).constructor.name,
         ).toBe('BlueprintCodeCommitRepoBuilderService');
     });
     test('resolve to GitHub repo builder', () => {
@@ -69,9 +69,9 @@ describe('test request handler registration', () => {
         expect(
             (
                 container.resolve(
-                    'BlueprintRepoBuilderService'
+                    'BlueprintRepoBuilderService',
                 ) as IBlueprintRepoBuilderService
-            ).constructor.name
+            ).constructor.name,
         ).toBe('BlueprintGitHubRepoBuilderService');
     });
 });

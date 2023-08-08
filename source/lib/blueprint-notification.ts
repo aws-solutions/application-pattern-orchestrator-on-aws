@@ -91,7 +91,7 @@ export class BlueprintNotification extends Construct {
                 {{patternDestination}}
                 `,
                 },
-            }
+            },
         );
 
         const dlq = new sqs.Queue(this, 'email-sender-dlq', {
@@ -115,14 +115,14 @@ export class BlueprintNotification extends Construct {
                     reason: 'It is a dead letter queue configured for lambda.',
                 },
             ],
-            true
+            true,
         );
 
         this.emailSenderFn = new nodeJsLambda.NodejsFunction(this, 'email-sender-fn', {
             description: 'Sends RAPM pattern lifecycle event notifications',
             entry: path.join(
                 __dirname,
-                '../lambda/blueprintgovernanceservice/src/email-sender/index.ts'
+                '../lambda/blueprintgovernanceservice/src/email-sender/index.ts',
             ),
             handler: 'handler',
             vpc: props.vpc,
@@ -162,7 +162,7 @@ export class BlueprintNotification extends Construct {
                     reason: 'Need to use * for sending emails using AWS SES',
                 },
             ],
-            true
+            true,
         );
 
         props.patternEmailTable.grantReadData(this.emailSenderFn);
@@ -188,7 +188,7 @@ export class BlueprintNotification extends Construct {
                     id: 'W5',
                     reason: 'Security group is created by CDK and is egress only',
                 },
-            ])
+            ]),
         );
     }
 }

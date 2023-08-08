@@ -30,7 +30,8 @@ import QueryContainerTemplate from '../../../core/QueryContainerTemplate';
 import GetAttributeDetailsQuery from '../../../queries/GetAttributeDetailsQuery';
 import { deleteAttribute } from '../../../queries/Mutation';
 import { ROUTE_ATTRIBUTES_VIEW, ROUTE_ATTRIBUTE_UPDATE } from '../../../routes';
-import { DeleteAttributeParams } from '../../../types';
+import { DeleteAttributeParams, PERMISSION_ATTRIBUTE_MANAGE } from '../../../types';
+import HasPermission from '../../../core/HasPermission';
 
 const AttributeDetail: FunctionComponent = () => {
     const appLayout = useAppLayoutContext();
@@ -87,22 +88,24 @@ const AttributeDetail: FunctionComponent = () => {
         });
 
         return (
-            <Inline>
-                <Button
-                    onClick={() => {
-                        setShowDeleteConfirmation(true);
-                    }}
-                >
-                    Delete
-                </Button>
-                <Button
-                    onClick={() => {
-                        history.push(path);
-                    }}
-                >
-                    Edit
-                </Button>
-            </Inline>
+            <HasPermission groups={PERMISSION_ATTRIBUTE_MANAGE}>
+                <Inline>
+                    <Button
+                        onClick={() => {
+                            setShowDeleteConfirmation(true);
+                        }}
+                    >
+                        Delete
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            history.push(path);
+                        }}
+                    >
+                        Edit
+                    </Button>
+                </Inline>
+            </HasPermission>
         );
     }, [attributeId, history]);
 

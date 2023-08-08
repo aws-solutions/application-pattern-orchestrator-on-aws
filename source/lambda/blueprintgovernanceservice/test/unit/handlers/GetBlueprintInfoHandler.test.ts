@@ -102,7 +102,7 @@ describe('test GetBlueprintInfoHandler', () => {
 
         const objectUnderTest = new GetBlueprintInfoHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
         const output = await objectUnderTest.handle(
             {
@@ -110,7 +110,7 @@ describe('test GetBlueprintInfoHandler', () => {
                 pathParameters: { id: '123' },
                 headers: { ttl: new Date().getTime().toString() },
             } as unknown as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
         expect(output).toBeDefined();
         expect(output).not.toBeUndefined();
@@ -143,14 +143,14 @@ describe('test GetBlueprintInfoHandler', () => {
 
         const objectUnderTest = new GetBlueprintInfoHandler(
             new StaticLoggerFactory(),
-            blueprintDBService
+            blueprintDBService,
         );
         const output = await objectUnderTest.handle(
             {
                 body: JSON.stringify('inputRequest'),
                 headers: { ttl: new Date().getTime().toString() },
             } as unknown as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         expect(output).toBeDefined();

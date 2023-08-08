@@ -49,7 +49,7 @@ export class AppRegistryUpdateHandler
             /* eslint-disable-next-line */
         } catch (e: any) {
             logger.error(
-                `Invalid message received. Error: ${e.message}, Message:${record.body}`
+                `Invalid message received. Error: ${e.message}, Message:${record.body}`,
             );
             throw new Error(`Invalid message received. Error: ${e.message}`);
         }

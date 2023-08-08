@@ -102,7 +102,7 @@ export async function getProduct(name: string): Promise<ServiceOutputTypes | und
         return await serviceCatalogClient.send(
             new DescribeProductAsAdminCommand({
                 Name: name,
-            })
+            }),
         );
     } catch (e) {
         logger.error(`Error in getProduct: ${JSON.stringify(e)}`);
@@ -114,7 +114,7 @@ export async function createProduct(
     name: string,
     version: string,
     templateUrl: string,
-    description: string
+    description: string,
 ): Promise<ServiceOutputTypes> {
     let product;
     try {
@@ -131,7 +131,7 @@ export async function createProduct(
                     },
                     Type: SERVICE_CATALOG_PRODUCT_TYPE,
                 },
-            })
+            }),
         );
         logger.info(`product created: ${JSON.stringify(product, null, 4)}`);
     } catch (err) {
@@ -144,7 +144,7 @@ export async function createProduct(
             new AssociateProductWithPortfolioCommand({
                 PortfolioId: BLUEPRINT_SERVICE_CATALOG_PORTFOLIO_ID,
                 ProductId: product.ProductViewDetail?.ProductViewSummary?.ProductId,
-            })
+            }),
         );
         logger.info(`Attached: ${JSON.stringify(attachmentResp)}`);
     } catch (err) {
@@ -159,7 +159,7 @@ export async function createProvisioningArtifact(
     productId: string,
     version: string,
     templateUrl: string,
-    description: string
+    description: string,
 ): Promise<ServiceOutputTypes> {
     return serviceCatalogClient.send(
         new CreateProvisioningArtifactCommand({
@@ -172,7 +172,7 @@ export async function createProvisioningArtifact(
                 },
                 Type: SERVICE_CATALOG_PRODUCT_TYPE,
             },
-        })
+        }),
     );
 }
 
@@ -214,18 +214,18 @@ export async function handler(event: CodePipelineEvent, context: Context): Promi
         const changedPackagesParsed = CHANGED_PACKAGES
             ? JSON.parse(
                   // The products JSON is base 64 encoded by the publish handler
-                  Buffer.from(CHANGED_PACKAGES, 'base64').toString()
+                  Buffer.from(CHANGED_PACKAGES, 'base64').toString(),
               )
             : undefined;
 
         logger.info(
-            'changedPackagesParsed: ' + JSON.stringify(changedPackagesParsed, null, 4)
+            'changedPackagesParsed: ' + JSON.stringify(changedPackagesParsed, null, 4),
         );
 
         const allPackagesParsed = ALL_PACKAGES
             ? JSON.parse(
                   // The products JSON is base 64 encoded by the publish handler
-                  Buffer.from(ALL_PACKAGES, 'base64').toString()
+                  Buffer.from(ALL_PACKAGES, 'base64').toString(),
               )
             : undefined;
 
@@ -240,18 +240,18 @@ export async function handler(event: CodePipelineEvent, context: Context): Promi
                     name: changedPackagesItem.name,
                     version: allPackagesParsed.find(
                         (allPackagesItem: NpmPackageDetails) =>
-                            allPackagesItem.name === changedPackagesItem.name
+                            allPackagesItem.name === changedPackagesItem.name,
                     ).version,
                     location: changedPackagesItem.location,
-                })
+                }),
             );
 
             for (const npmPackage of changedPackagesParsedSyncVersions) {
                 logger.info(
-                    `Creating new version ${npmPackage.version} from template in package ${npmPackage.name}`
+                    `Creating new version ${npmPackage.version} from template in package ${npmPackage.name}`,
                 );
                 const templatePathFromPackages = npmPackage.location.substring(
-                    npmPackage.location.lastIndexOf('/packages')
+                    npmPackage.location.lastIndexOf('/packages'),
                 );
 
                 const s3GetObjResp = await s3Client.send(
@@ -259,12 +259,12 @@ export async function handler(event: CodePipelineEvent, context: Context): Promi
                         Bucket: `${BLUEPRINT_ARTIFACTS_BUCKET_NAME}`,
                         MaxKeys: 1,
                         Prefix: `${TEMPLATES_ARTIFACTS_LOCATION}${templatePathFromPackages}/template/`,
-                    })
+                    }),
                 );
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const s3GetObjKey = s3GetObjResp.Contents![0].Key!;
                 const s3CfnTemplateFileName = s3GetObjKey.substring(
-                    s3GetObjKey.lastIndexOf('/template')
+                    s3GetObjKey.lastIndexOf('/template'),
                 );
                 const templateS3ObjectKey = `${TEMPLATES_ARTIFACTS_LOCATION}${templatePathFromPackages}${s3CfnTemplateFileName}`;
                 const templateUrl = `https://${BLUEPRINT_ARTIFACTS_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${templateS3ObjectKey}`;
@@ -275,7 +275,7 @@ export async function handler(event: CodePipelineEvent, context: Context): Promi
                     await embedAttributeGroupMapping(
                         patternDetails.attributes,
                         BLUEPRINT_ARTIFACTS_BUCKET_NAME as string,
-                        templateS3ObjectKey
+                        templateS3ObjectKey,
                     );
                 }
                 const product: DescribeProductAsAdminCommandOutput | undefined =
@@ -283,14 +283,14 @@ export async function handler(event: CodePipelineEvent, context: Context): Promi
 
                 if (product?.ProductViewDetail?.ProductViewSummary?.ProductId) {
                     logger.info(
-                        'Product already exists in service catalog, creating a new version'
+                        'Product already exists in service catalog, creating a new version',
                     );
 
                     const result = (await createProvisioningArtifact(
                         product.ProductViewDetail.ProductViewSummary.ProductId,
                         npmPackage.version,
                         templateUrl,
-                        patternDetails?.description
+                        patternDetails?.description,
                     )) as CreateProvisioningArtifactCommandOutput;
                     changedBlueprintProducts.push({
                         name: productName,
@@ -305,7 +305,7 @@ export async function handler(event: CodePipelineEvent, context: Context): Promi
                         productName,
                         npmPackage.version,
                         templateUrl,
-                        patternDetails?.description
+                        patternDetails?.description,
                     )) as CreateProductCommandOutput;
 
                     changedBlueprintProducts.push({
@@ -323,8 +323,8 @@ export async function handler(event: CodePipelineEvent, context: Context): Promi
                     changedPackagesParsedSyncVersions.map((item: NpmPackageDetails) => ({
                         name: item.name,
                         version: item.version,
-                    }))
-                )
+                    })),
+                ),
             ).toString('base64');
             allPackagesOutputVariable = allPackagesParsed
                 ? Buffer.from(
@@ -332,16 +332,16 @@ export async function handler(event: CodePipelineEvent, context: Context): Promi
                           allPackagesParsed.map((item: NpmPackageDetails) => ({
                               name: item.name,
                               version: item.version,
-                          }))
-                      )
+                          })),
+                      ),
                   ).toString('base64')
                 : '';
 
             const unchangedPackages = allPackagesParsed.filter(
                 (arr1Obj: NpmPackageDetails) =>
                     !changedPackagesParsed.some(
-                        (arr2Obj: NpmPackageDetails) => arr1Obj.name === arr2Obj.name
-                    )
+                        (arr2Obj: NpmPackageDetails) => arr1Obj.name === arr2Obj.name,
+                    ),
             );
             allBlueprintProducts = [...changedBlueprintProducts];
             for (const unchangedPackage of unchangedPackages) {
@@ -365,15 +365,15 @@ export async function handler(event: CodePipelineEvent, context: Context): Promi
                 outputVariables: {
                     // Need to base 64 encode the below json strings because output variables get JSON encoded
                     CHANGED_SERVICE_CATALOG_PRODUCTS: Buffer.from(
-                        JSON.stringify(changedBlueprintProducts)
+                        JSON.stringify(changedBlueprintProducts),
                     ).toString('base64'),
                     ALL_SERVICE_CATALOG_PRODUCTS: Buffer.from(
-                        JSON.stringify(allBlueprintProducts)
+                        JSON.stringify(allBlueprintProducts),
                     ).toString('base64'),
                     CHANGED_PACKAGES: changedPackagesOutputVariable,
                     ALL_PACKAGES: allPackagesOutputVariable,
                 },
-            })
+            }),
         );
     } catch (e) {
         logger.error(`Error: ${JSON.stringify(e)}`);
@@ -385,7 +385,7 @@ export async function handler(event: CodePipelineEvent, context: Context): Promi
                     type: 'JobFailed',
                     externalExecutionId: context.awsRequestId,
                 },
-            })
+            }),
         );
         throw e;
     }
@@ -406,10 +406,10 @@ export function streamToString(stream: Readable): Promise<string> {
 async function embedAttributeGroupMapping(
     patternAttributes: Record<string, string>,
     blueprintArtifactsBucketName: string,
-    s3CfnObjectKey: string
+    s3CfnObjectKey: string,
 ): Promise<void> {
     const attributeGroupNames = Object.entries(patternAttributes).map(
-        ([key, value]) => `APO.${key.toUpperCase()}.${value.toUpperCase()}`
+        ([key, value]) => `APO.${key.toUpperCase()}.${value.toUpperCase()}`,
     );
     const bucketParams = {
         Bucket: blueprintArtifactsBucketName,
@@ -429,8 +429,8 @@ async function embedAttributeGroupMapping(
         } catch (e) {
             logger.error(
                 `Unable to parse the cloudformation template : ${blueprintArtifactsBucketName}, ${s3CfnObjectKey}, error: ${JSON.stringify(
-                    e
-                )}`
+                    e,
+                )}`,
             );
             throw e;
         }
@@ -473,6 +473,6 @@ async function embedAttributeGroupMapping(
             Bucket: blueprintArtifactsBucketName,
             Key: s3CfnObjectKey,
             Body: finalCfnTemplate,
-        })
+        }),
     );
 }

@@ -44,7 +44,7 @@ describe('test AppRegistrySyncRequestQueue', () => {
 
     beforeAll(() => {
         when(mockAppConfiguration.appRegistryUpdaterQueueUrl).thenReturn(
-            'test-sqs-queue'
+            'test-sqs-queue',
         );
         container.register<LoggerFactory>('LoggerFactory', {
             useClass: StaticLoggerFactory,

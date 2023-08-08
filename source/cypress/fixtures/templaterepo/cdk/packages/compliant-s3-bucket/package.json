@@ -2,7 +2,7 @@
   "name": "@cypress-cdk/compliant-s3-bucket",
   "version": "1.0.0",
   "description": "Compliant S3 bucket",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "main": "lib/compliant-s3-bucket.js",
   "directories": {
     "lib": "lib"

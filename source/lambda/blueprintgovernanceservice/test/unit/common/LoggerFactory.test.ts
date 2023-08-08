@@ -42,7 +42,7 @@ describe('LoggerFactory', () => {
                 // So we test it again below
                 // https://github.com/facebook/jest/issues/6466
             }),
-            expect.anything()
+            expect.anything(),
         );
 
         // can't match the entire string due to timestamp being random
@@ -50,8 +50,8 @@ describe('LoggerFactory', () => {
             logConsole.mock.calls[0][0][Symbol.for('message')]
                 .toString()
                 .startsWith(
-                    '{"message":"test message","level":"error","label":"foo","timestamp":"'
-                )
+                    '{"message":"test message","level":"error","label":"foo","timestamp":"',
+                ),
         ).toBe(false);
     });
 
@@ -61,7 +61,7 @@ describe('LoggerFactory', () => {
             {} as Context,
             undefined,
             // eslint-disable-next-line @typescript-eslint/naming-convention
-            { path: (e, _): string => e.path }
+            { path: (e, _): string => e.path },
         );
         const log = loggerFactory.getLogger('foo', 'info');
         expect((<Winston.Logger>log).level).toBe('info');
@@ -77,7 +77,7 @@ describe('LoggerFactory', () => {
                 // So we test it again below
                 // https://github.com/facebook/jest/issues/6466
             }),
-            expect.anything()
+            expect.anything(),
         );
 
         // can't match the entire string due to timestamp being random
@@ -85,8 +85,8 @@ describe('LoggerFactory', () => {
             logConsole.mock.calls[0][0][Symbol.for('message')]
                 .toString()
                 .startsWith(
-                    '{"message":"test message","level":"error","path":"/test","label":"foo","timestamp":"'
-                )
+                    '{"message":"test message","level":"error","path":"/test","label":"foo","timestamp":"',
+                ),
         ).toBe(false);
     });
 

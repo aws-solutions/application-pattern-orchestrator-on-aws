@@ -17,7 +17,7 @@ import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
 
 export async function getPatternById(
     ddbDocClient: DynamoDBDocumentClient,
-    patternId: string
+    patternId: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<Record<string, any> | undefined> {
     const params = {

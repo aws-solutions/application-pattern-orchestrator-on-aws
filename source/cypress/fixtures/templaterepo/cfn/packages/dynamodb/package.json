@@ -1,5 +1,6 @@
 {
   "name": "dynamodb",
   "version": "1.0.0",
-  "license": "MIT"
+  "license": "Apache-2.0",
+  "description": "Test package for cypress testing"
 }

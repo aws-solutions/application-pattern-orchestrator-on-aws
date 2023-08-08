@@ -90,6 +90,9 @@ describe('Authenticate component tests', () => {
                 idToken: {
                     payload: { 'cognito:groups': ['User'] },
                 },
+                accessToken: {
+                    payload: { 'cognito:groups': ['SYSTEM_ADMIN'] },
+                },
             },
             username: 'test_user',
         });
@@ -108,6 +111,7 @@ describe('Authenticate component tests', () => {
         // assert
         expect(mockSetUser).toHaveBeenCalledWith({
             email: 'test@amazon.com',
+            groups: ['SYSTEM_ADMIN'],
         });
     });
 

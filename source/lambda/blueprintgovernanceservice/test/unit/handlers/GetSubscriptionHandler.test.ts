@@ -34,7 +34,7 @@ describe('Get subscription handler tests', () => {
     test('returns 404 if not found', async () => {
         // arrange
         when(db.getNotificationSubscription(anything(), anything())).thenResolve(
-            undefined
+            undefined,
         );
 
         // act
@@ -42,7 +42,7 @@ describe('Get subscription handler tests', () => {
             {
                 queryStringParameters: { patternId: '1234', email: 'test' },
             } as unknown as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         // assert
@@ -58,7 +58,7 @@ describe('Get subscription handler tests', () => {
             {
                 queryStringParameters: { patternId: '1234', email: 'test' },
             } as unknown as APIGatewayProxyEvent,
-            {} as Context
+            {} as Context,
         );
 
         // assert

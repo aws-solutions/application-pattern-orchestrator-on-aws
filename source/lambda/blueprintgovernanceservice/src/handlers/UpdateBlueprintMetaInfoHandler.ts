@@ -81,7 +81,7 @@ export class UpdateBlueprintMetaInfoHandler
     public constructor(
         @inject('LoggerFactory') loggerFactory: LoggerFactory,
         @inject('BlueprintDBService')
-        private readonly blueprintDBService: BlueprintDBService
+        private readonly blueprintDBService: BlueprintDBService,
     ) {
         this.logger = loggerFactory.getLogger('UpdateBlueprintHandler');
     }
@@ -95,13 +95,13 @@ export class UpdateBlueprintMetaInfoHandler
     public async handle(
         event: APIGatewayProxyEvent,
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        _context: Context
+        _context: Context,
     ): Promise<ServerlessResponse> {
         this.logger.debug('Processing update pattern request');
         if (!event.body) {
             return ServerlessResponse.ofObject(
                 400,
-                'Request body must contain valid JSON.'
+                'Request body must contain valid JSON.',
             );
         }
 
@@ -118,11 +118,11 @@ export class UpdateBlueprintMetaInfoHandler
         await this.blueprintDBService.updateBlueprintMetaData(
             event.pathParameters.id,
             input.description,
-            input.attributes
+            input.attributes,
         );
 
         const patternObject = await this.blueprintDBService.getBlueprintById(
-            event.pathParameters.id
+            event.pathParameters.id,
         );
 
         return ServerlessResponse.ofObject(200, { patternObject });

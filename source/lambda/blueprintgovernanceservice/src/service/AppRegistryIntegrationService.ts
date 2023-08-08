@@ -66,8 +66,8 @@ export async function checkAttributeExist(name: string): Promise<boolean> {
         } else {
             logger.error(
                 `Error read attribute group ${attributeGroupName} from AppRegistry. Error: ${JSON.stringify(
-                    err
-                )}`
+                    err,
+                )}`,
             );
             throw err;
         }
@@ -97,13 +97,13 @@ export async function updateAttribute(data: Attribute): Promise<void> {
         if (err.code === 'ResourceNotFoundException') {
             doCreate = true;
             logger.info(
-                `attribute group ${attributeGroupName} not found, create a new one`
+                `attribute group ${attributeGroupName} not found, create a new one`,
             );
         } else {
             logger.error(
                 `Error read attribute group ${attributeGroupName} from AppRegistry. Error: ${JSON.stringify(
-                    err
-                )}`
+                    err,
+                )}`,
             );
             throw err;
         }
@@ -131,7 +131,7 @@ export async function updateAttribute(data: Attribute): Promise<void> {
         // check if attribute group actually need to be updated
         const tagsMatch =
             Object.entries(tags).filter(
-                ([key, value]) => existingAttributeGroup?.tags?.[key] === value
+                ([key, value]) => existingAttributeGroup?.tags?.[key] === value,
             ).length === Object.keys(tags).length;
 
         if (
@@ -157,12 +157,12 @@ export async function updateAttribute(data: Attribute): Promise<void> {
                 logger.info('attribute group tags updated.');
             } else {
                 logger.error(
-                    `updateAttributeGroup does not return valid response. attributeGroupName: ${attributeGroupName}`
+                    `updateAttributeGroup does not return valid response. attributeGroupName: ${attributeGroupName}`,
                 );
                 // eslint-disable-next-line @typescript-eslint/no-throw-literal
                 throw new BasicHttpError(
                     500,
-                    `Failed to update tags on attribute group. attributeGroupName: ${attributeGroupName}`
+                    `Failed to update tags on attribute group. attributeGroupName: ${attributeGroupName}`,
                 );
             }
         } else {
@@ -194,8 +194,8 @@ export async function deleteAttribute(id: string): Promise<void> {
         } else {
             logger.error(
                 `Error read attribute group ${attributeGroupName} from AppRegistry. Error: ${JSON.stringify(
-                    err
-                )}`
+                    err,
+                )}`,
             );
             throw err;
         }

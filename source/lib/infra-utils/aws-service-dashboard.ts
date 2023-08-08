@@ -57,7 +57,7 @@ export class AWSServiceDashboard extends Construct {
         // canary and api gateway widgets
         if (props.apiGateway) {
             dashboard.addWidgets(
-                ...this.createApiWidgets(props.apiGateway, props.canaryName)
+                ...this.createApiWidgets(props.apiGateway, props.canaryName),
             );
         }
 
@@ -65,7 +65,7 @@ export class AWSServiceDashboard extends Construct {
         dashboard.addWidgets(
             ...props.lambdas
                 .map((lambda) => this.createLambdaWidgets(lambda))
-                .reduce((previous, current) => previous.concat(current))
+                .reduce((previous, current) => previous.concat(current)),
         );
 
         // dynamo db
@@ -73,7 +73,7 @@ export class AWSServiceDashboard extends Construct {
             dashboard.addWidgets(
                 ...props.dynamoDbTables
                     .map((table) => this.createDynamoDbWidgets(table))
-                    .reduce((previous, current) => previous.concat(current))
+                    .reduce((previous, current) => previous.concat(current)),
             );
         }
 
@@ -91,21 +91,21 @@ export class AWSServiceDashboard extends Construct {
             'Maximum',
             'Duration',
             cw.Statistic.MAXIMUM,
-            cw.Unit.MILLISECONDS
+            cw.Unit.MILLISECONDS,
         );
         const averageDurationMetrics = this.lambdaMetric(
             lambda,
             'Average',
             'Duration',
             cw.Statistic.AVERAGE,
-            cw.Unit.MILLISECONDS
+            cw.Unit.MILLISECONDS,
         );
         const minDurationMetrics = this.lambdaMetric(
             lambda,
             'Minimum',
             'Duration',
             cw.Statistic.MINIMUM,
-            cw.Unit.MILLISECONDS
+            cw.Unit.MILLISECONDS,
         );
         this.keyMetrics.set('SUCESS_RATE', successRateMetrics);
 
@@ -129,7 +129,7 @@ export class AWSServiceDashboard extends Construct {
             'Invocations',
             'Invocations',
             cw.Statistic.SUM,
-            cw.Unit.COUNT
+            cw.Unit.COUNT,
         );
 
         const errorCount: cw.IMetric = this.lambdaMetric(
@@ -137,7 +137,7 @@ export class AWSServiceDashboard extends Construct {
             'Error',
             'Errors',
             cw.Statistic.SUM,
-            cw.Unit.COUNT
+            cw.Unit.COUNT,
         );
 
         const successRateMetrics = new cw.MathExpression({
@@ -155,7 +155,7 @@ export class AWSServiceDashboard extends Construct {
 
     private createApiWidgets(
         apg: ApiGatewayWidgetProps,
-        canaryName?: string
+        canaryName?: string,
     ): cw.IWidget[] {
         const metrics = [];
 
@@ -170,7 +170,7 @@ export class AWSServiceDashboard extends Construct {
                         unit: cw.Unit.PERCENT,
                         dimensionsMap: { CanaryName: canaryName },
                     }),
-                ])
+                ]),
             );
         }
 
@@ -185,9 +185,9 @@ export class AWSServiceDashboard extends Construct {
                         cw.Statistic.SUM,
                         cw.Unit.COUNT,
                         api.method,
-                        api.resource
-                    )
-                )
+                        api.resource,
+                    ),
+                ),
             ),
             this.apiGatewayWidget(
                 'API Latency',
@@ -199,9 +199,9 @@ export class AWSServiceDashboard extends Construct {
                         cw.Statistic.AVERAGE,
                         cw.Unit.MILLISECONDS,
                         api.method,
-                        api.resource
-                    )
-                )
+                        api.resource,
+                    ),
+                ),
             ),
             this.apiGatewayWidget(
                 'API Errors',
@@ -213,8 +213,8 @@ export class AWSServiceDashboard extends Construct {
                         cw.Statistic.SUM,
                         cw.Unit.COUNT,
                         api.method,
-                        api.resource
-                    )
+                        api.resource,
+                    ),
                 ),
                 apg.endpoints.map((api) =>
                     this.apiGatewayMetric(
@@ -224,12 +224,12 @@ export class AWSServiceDashboard extends Construct {
                         cw.Statistic.SUM,
                         cw.Unit.COUNT,
                         api.method,
-                        api.resource
-                    )
+                        api.resource,
+                    ),
                 ),
                 '4XX Errors',
-                '5XX Errors'
-            )
+                '5XX Errors',
+            ),
         );
 
         return metrics;
@@ -244,7 +244,7 @@ export class AWSServiceDashboard extends Construct {
         label: string,
         metricName: string,
         statistic: cw.Statistic,
-        unit?: cw.Unit
+        unit?: cw.Unit,
     ): cw.IMetric {
         return this.createGraphMetric({
             label,
@@ -265,28 +265,28 @@ export class AWSServiceDashboard extends Construct {
                     'Provisioned Read',
                     'ProvisionedReadCapacityUnits',
                     cw.Statistic.AVERAGE,
-                    cw.Unit.COUNT
+                    cw.Unit.COUNT,
                 ),
                 this.ddbMetric(
                     dynamoDbTable.tableName,
                     'Consumed Read',
                     'ConsumedReadCapacityUnits',
                     cw.Statistic.AVERAGE,
-                    cw.Unit.COUNT
+                    cw.Unit.COUNT,
                 ),
                 this.ddbMetric(
                     dynamoDbTable.tableName,
                     'Provisioned Read',
                     'ProvisionedWriteCapacityUnits',
                     cw.Statistic.AVERAGE,
-                    cw.Unit.COUNT
+                    cw.Unit.COUNT,
                 ),
                 this.ddbMetric(
                     dynamoDbTable.tableName,
                     'Consumed Read',
                     'ConsumedWriteCapacityUnits',
                     cw.Statistic.AVERAGE,
-                    cw.Unit.COUNT
+                    cw.Unit.COUNT,
                 ),
             ]),
             this.ddbWidget(`${prefix} - Latency`, [
@@ -296,7 +296,7 @@ export class AWSServiceDashboard extends Construct {
                     'SuccessfulRequestLatency',
                     cw.Statistic.AVERAGE,
                     cw.Unit.MILLISECONDS,
-                    { Operation: 'GetItem' }
+                    { Operation: 'GetItem' },
                 ),
                 this.ddbMetric(
                     dynamoDbTable.tableName,
@@ -304,7 +304,7 @@ export class AWSServiceDashboard extends Construct {
                     'SuccessfulRequestLatency',
                     cw.Statistic.AVERAGE,
                     cw.Unit.MILLISECONDS,
-                    { Operation: 'PutItem' }
+                    { Operation: 'PutItem' },
                 ),
                 this.ddbMetric(
                     dynamoDbTable.tableName,
@@ -312,7 +312,7 @@ export class AWSServiceDashboard extends Construct {
                     'SuccessfulRequestLatency',
                     cw.Statistic.AVERAGE,
                     cw.Unit.MILLISECONDS,
-                    { Operation: 'Scan' }
+                    { Operation: 'Scan' },
                 ),
                 this.ddbMetric(
                     dynamoDbTable.tableName,
@@ -320,7 +320,7 @@ export class AWSServiceDashboard extends Construct {
                     'SuccessfulRequestLatency',
                     cw.Statistic.AVERAGE,
                     cw.Unit.MILLISECONDS,
-                    { Operation: 'Query' }
+                    { Operation: 'Query' },
                 ),
             ]),
             this.ddbWidget(`${prefix} - Errors`, [
@@ -332,7 +332,7 @@ export class AWSServiceDashboard extends Construct {
                     cw.Unit.COUNT,
                     {
                         Operation: 'GetItem',
-                    }
+                    },
                 ),
                 this.ddbMetric(
                     dynamoDbTable.tableName,
@@ -342,7 +342,7 @@ export class AWSServiceDashboard extends Construct {
                     cw.Unit.COUNT,
                     {
                         Operation: 'BatchGetItem',
-                    }
+                    },
                 ),
                 this.ddbMetric(
                     dynamoDbTable.tableName,
@@ -352,7 +352,7 @@ export class AWSServiceDashboard extends Construct {
                     cw.Unit.COUNT,
                     {
                         Operation: 'Scan',
-                    }
+                    },
                 ),
                 this.ddbMetric(
                     dynamoDbTable.tableName,
@@ -362,7 +362,7 @@ export class AWSServiceDashboard extends Construct {
                     cw.Unit.COUNT,
                     {
                         Operation: 'Query',
-                    }
+                    },
                 ),
                 this.ddbMetric(
                     dynamoDbTable.tableName,
@@ -372,7 +372,7 @@ export class AWSServiceDashboard extends Construct {
                     cw.Unit.COUNT,
                     {
                         Operation: 'PutItem',
-                    }
+                    },
                 ),
                 this.ddbMetric(
                     dynamoDbTable.tableName,
@@ -382,7 +382,7 @@ export class AWSServiceDashboard extends Construct {
                     cw.Unit.COUNT,
                     {
                         Operation: 'BatchWriteItem',
-                    }
+                    },
                 ),
                 this.ddbMetric(
                     dynamoDbTable.tableName,
@@ -392,7 +392,7 @@ export class AWSServiceDashboard extends Construct {
                     cw.Unit.COUNT,
                     {
                         Operation: 'UpdateItem',
-                    }
+                    },
                 ),
                 this.ddbMetric(
                     dynamoDbTable.tableName,
@@ -402,7 +402,7 @@ export class AWSServiceDashboard extends Construct {
                     cw.Unit.COUNT,
                     {
                         Operation: 'DeleteItem',
-                    }
+                    },
                 ),
             ]),
             this.ddbWidget(`${prefix} - Throttled Requests`, [
@@ -411,7 +411,7 @@ export class AWSServiceDashboard extends Construct {
                     'Throttled Requests',
                     'ThrottledRequests',
                     cw.Statistic.SUM,
-                    cw.Unit.COUNT
+                    cw.Unit.COUNT,
                 ),
             ]),
         ];
@@ -424,7 +424,7 @@ export class AWSServiceDashboard extends Construct {
         statistic: cw.Statistic,
         unit?: cw.Unit,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        dimensions?: Record<string, any>
+        dimensions?: Record<string, any>,
     ): cw.IMetric {
         return this.createGraphMetric({
             label,
@@ -445,7 +445,7 @@ export class AWSServiceDashboard extends Construct {
         leftMetrics: cw.IMetric[],
         rightMetrics?: cw.IMetric[],
         leftLabel?: string,
-        rightLabel?: string
+        rightLabel?: string,
     ): cw.IWidget {
         return this.createGraphWidget({
             title,
@@ -465,7 +465,7 @@ export class AWSServiceDashboard extends Construct {
         method: string,
         resource: string,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        dimensions?: Record<string, any>
+        dimensions?: Record<string, any>,
     ): cw.IMetric {
         return this.createGraphMetric({
             label,

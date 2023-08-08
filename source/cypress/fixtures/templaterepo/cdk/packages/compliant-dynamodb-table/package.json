@@ -2,7 +2,7 @@
   "name": "@cypress-cdk/compliant-dynamodbtable",
   "version": "1.0.0",
   "description": "Compliant DynamoDb Table ",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "main": "lib/compliant-dynamodb-table.js",
   "directories": {
     "lib": "lib",

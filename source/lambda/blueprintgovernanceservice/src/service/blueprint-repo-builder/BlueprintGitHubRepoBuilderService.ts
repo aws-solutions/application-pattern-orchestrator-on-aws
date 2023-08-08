@@ -46,7 +46,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
     public constructor(
         @inject('LoggerFactory') loggerFactory: LoggerFactory,
         @inject('DependencyConfigurationProvider')
-        private readonly dependencyConfigurationProvider: DependencyConfigurationProvider
+        private readonly dependencyConfigurationProvider: DependencyConfigurationProvider,
     ) {
         this.logger = loggerFactory.getLogger('BlueprintRepoBuilderService');
         const githubUrl = process.env.GITHUB_URL;
@@ -67,7 +67,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
             });
         } catch (e) {
             this.logger.error(
-                `Unable to delete the repo: ${repoName}: ${JSON.stringify(e, null, 4)}`
+                `Unable to delete the repo: ${repoName}: ${JSON.stringify(e, null, 4)}`,
             );
             throw e;
         }
@@ -80,7 +80,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
     private async getBlueprintGithubToken(): Promise<string> {
         this.logger.info('getBlueprintGithubToken');
         return this.dependencyConfigurationProvider.getBlueprintServiceRepoCredentials(
-            'BLUEPRINTGOVERNANCE'
+            'BLUEPRINTGOVERNANCE',
         );
     }
 
@@ -96,7 +96,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
 
     public async createAndInitializeRepo(
         repoName: string,
-        patternType: PatternType
+        patternType: PatternType,
     ): Promise<BlueprintCodeRepoDetails> {
         // Create pattern repo
         const blueprintRepoDetails = await this.createRepo(repoName);
@@ -106,7 +106,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
             await this.initialiseRepo(
                 blueprintRepoDetails.branchName,
                 blueprintRepoDetails.repoName,
-                patternType
+                patternType,
             );
 
             // Enable branch protection on main branch
@@ -121,7 +121,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
             }
         } catch (e) {
             this.logger.error(
-                `Error initialising repo: ${repoName}: ${JSON.stringify(e, null, 4)}`
+                `Error initialising repo: ${repoName}: ${JSON.stringify(e, null, 4)}`,
             );
             // rollback the repo creation
             await this.deleteRepo(repoName);
@@ -151,7 +151,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
                         private: true,
                         is_template: true,
                         auto_init: true,
-                    }
+                    },
                 );
                 if (createRepoResponse.status == 201) {
                     return {
@@ -191,7 +191,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
     public async initialiseRepo(
         branch: string,
         repoName: string,
-        patternType: PatternType
+        patternType: PatternType,
     ): Promise<void> {
         const octokit = await this.getOctokit();
         const maxRetries = 3;
@@ -204,7 +204,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
             try {
                 this.logger.debug('Attempt: ' + retryGetlatestShaCount);
                 latestSHAResp = await octokit.request(
-                    `GET /repos/${this.org}/${repoName}/branches/${branch}`
+                    `GET /repos/${this.org}/${repoName}/branches/${branch}`,
                 );
                 if (latestSHAResp.status >= 200 && latestSHAResp.status <= 299) {
                     retry = false;
@@ -215,7 +215,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
             } catch (e) {
                 this.logger.error(
                     'Error when initializing repo, could not get latestSHA',
-                    e
+                    e,
                 );
                 retryGetlatestShaCount++;
                 await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -226,7 +226,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
             // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw new BlueprintError(
                 `Error when initializing repo, could not get latestSHA`,
-                500
+                500,
             );
         }
         const latestSHA = latestSHAResp.data.commit.sha;
@@ -238,10 +238,10 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
                 __dirname,
                 `./${
                     blueprintRepoBuilderServiceConstants.rootInitialRepoDir
-                }/${patternType.toLowerCase()}`
+                }/${patternType.toLowerCase()}`,
             ),
             latestSHA,
-            branch
+            branch,
         );
 
         // 3. Create the commit
@@ -252,7 +252,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
                 message: 'chore: initial repo setup',
                 parents: [latestSHA],
                 tree: createTreeResp.data.sha,
-            }
+            },
         );
 
         // 4. Update the reference of your branch to point to the new commit SHA (on master branch example)
@@ -262,7 +262,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
                 accept: 'application/vnd.github.v3+json',
                 ref: `refs/heads/${branch}`,
                 sha: createCommitResp.data.sha,
-            }
+            },
         );
     }
 
@@ -273,7 +273,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
         repoName: string,
         dirPath: string,
         latestSHA: string,
-        branchName: string
+        branchName: string,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ): Promise<any> {
         const octokit = await this.getOctokit();
@@ -298,7 +298,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
         repoName: string,
         dirPath: string,
         branchName: string,
-        gitTreeArray?: GitTree[]
+        gitTreeArray?: GitTree[],
     ): Promise<GitTree[]> {
         if (!gitTreeArray) {
             gitTreeArray = [];
@@ -316,7 +316,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
                 const treeObjForCommit = await this.getTreeObjectForCommit(
                     repoName,
                     file,
-                    branchName
+                    branchName,
                 );
                 gitTreeArray.push(treeObjForCommit);
             }
@@ -331,11 +331,11 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
     private async getTreeObjectForCommit(
         repoName: string,
         filePath: string,
-        branchName: string
+        branchName: string,
     ): Promise<GitTree> {
         const octokit = await this.getOctokit();
         const template = handlebars.compile(
-            fs.existsSync(filePath) ? fs.readFileSync(filePath).toString() : ''
+            fs.existsSync(filePath) ? fs.readFileSync(filePath).toString() : '',
         );
         const content = template({ branchName });
         const createBlob = await octokit.request(
@@ -344,7 +344,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
                 accept: 'application/vnd.github.v3+json',
                 content,
                 encoding: 'utf-8',
-            }
+            },
         );
         const relativePathFromRoot = this.getRelativePathFromRoot(filePath);
         return this.getTreeObject(relativePathFromRoot, createBlob.data.sha);
@@ -353,7 +353,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
     private getRelativePathFromRoot(filePath: string): string {
         const templateRootDir = `/${blueprintRepoBuilderServiceConstants.rootInitialRepoDir}`;
         return filePath.substring(
-            filePath.lastIndexOf(templateRootDir) + templateRootDir.length + 5
+            filePath.lastIndexOf(templateRootDir) + templateRootDir.length + 5,
         );
     }
 
@@ -371,7 +371,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
 
     public async enableBranchProtection(
         repoName: string,
-        branchName: string
+        branchName: string,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ): Promise<any> {
         try {
@@ -392,7 +392,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
                     },
                     // Let anyone push to the protected branch
                     restrictions: null,
-                }
+                },
             );
         } catch (e) {
             this.logger.error('Error when enabling branch protection', e);
@@ -403,7 +403,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
 
     public async addCodeowners(
         repoName: string,
-        codeowners: string[]
+        codeowners: string[],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ): Promise<any> {
         try {
@@ -416,7 +416,7 @@ export class BlueprintGitHubRepoBuilderService implements IBlueprintRepoBuilderS
                     accept: 'application/vnd.github.v3+json',
                     message: 'Add CODEOWNERS',
                     content: Buffer.from(codeOwnersContent).toString('base64'),
-                }
+                },
             );
         } catch (e) {
             this.logger.error('Error when adding codeowners', e);

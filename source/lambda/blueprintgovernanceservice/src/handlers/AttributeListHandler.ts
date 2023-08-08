@@ -93,7 +93,7 @@ export class AttributeListHandler extends AttributeBaseHandler {
     public constructor(
         @inject('LoggerFactory') loggerFactory: LoggerFactory,
         @inject('BlueprintDBService')
-        private readonly blueprintDBService: BlueprintDBService
+        private readonly blueprintDBService: BlueprintDBService,
     ) {
         super();
         this.logger = loggerFactory.getLogger(handlerName);
@@ -101,7 +101,7 @@ export class AttributeListHandler extends AttributeBaseHandler {
 
     public validateInputParameters = (
         event: APIGatewayProxyEvent,
-        context: Context
+        context: Context,
     ): InputValidationResult => {
         let validated = true;
         const errors: string[] = [];
@@ -118,8 +118,8 @@ export class AttributeListHandler extends AttributeBaseHandler {
                 validated &&= false;
                 errors.push(
                     `Unsupported query parameter. Query Parameters: ${invalidParams.join(
-                        ','
-                    )}`
+                        ',',
+                    )}`,
                 );
             }
         }
@@ -130,7 +130,7 @@ export class AttributeListHandler extends AttributeBaseHandler {
     public validateQueryParameters(
         event: APIGatewayProxyEvent,
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        _context: Context
+        _context: Context,
     ): InputValidationResult {
         let validated = true;
         const errors: string[] = [];
@@ -143,7 +143,7 @@ export class AttributeListHandler extends AttributeBaseHandler {
             ) {
                 validated &&= false;
                 errors.push(
-                    'The maxRow must be an integer between 1 and 1000. If not specified, the default value is 100.'
+                    'The maxRow must be an integer between 1 and 1000. If not specified, the default value is 100.',
                 );
             }
         }
@@ -151,12 +151,12 @@ export class AttributeListHandler extends AttributeBaseHandler {
         if (event.queryStringParameters?.nextToken) {
             const nextToken = decodeURIComponent(
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                event.queryStringParameters.nextToken ?? ''
+                event.queryStringParameters.nextToken ?? '',
             );
             if (nextToken.trim().length === 0) {
                 validated &&= false;
                 errors.push(
-                    'The nextToken must be the value from the last response received.'
+                    'The nextToken must be the value from the last response received.',
                 );
             }
         }
@@ -165,7 +165,7 @@ export class AttributeListHandler extends AttributeBaseHandler {
 
     private async transformResults(
         results: Attribute[],
-        nextToken: string | undefined
+        nextToken: string | undefined,
     ): Promise<PaginatedResults<Partial<Attribute>>> {
         return {
             results: results.map((item) => ({
@@ -178,11 +178,11 @@ export class AttributeListHandler extends AttributeBaseHandler {
     public async process(
         event: APIGatewayProxyEvent,
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        _context: Context
+        _context: Context,
     ): Promise<BasicHttpResponse> {
         const maxRow = Math.min(
             +(event.queryStringParameters?.['maxRow'] || defaultMaxRow.toString()),
-            defaultMaxRow
+            defaultMaxRow,
         );
         const previousToken = event.queryStringParameters?.['nextToken']
             ? decodeURIComponent(event.queryStringParameters['nextToken'])
@@ -194,13 +194,13 @@ export class AttributeListHandler extends AttributeBaseHandler {
 
         return BasicHttpResponse.ofObject(
             200,
-            await this.transformResults(data[0], data[1])
+            await this.transformResults(data[0], data[1]),
         );
     }
 
     private async doFetchAttributes(
         maxRow: number,
-        previousToken?: string
+        previousToken?: string,
     ): Promise<[Attribute[], string]> {
         this.logger.info(`${defaultMaxRow} fetch page starts from ${previousToken}`);
         return this.blueprintDBService.listAttributes(maxRow, previousToken);

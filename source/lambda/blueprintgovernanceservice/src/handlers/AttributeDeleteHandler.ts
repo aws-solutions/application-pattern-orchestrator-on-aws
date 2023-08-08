@@ -59,7 +59,7 @@ export class AttributeDeleteHandler extends AttributeBaseHandler {
     public constructor(
         @inject('LoggerFactory') loggerFactory: LoggerFactory,
         @inject('BlueprintDBService')
-        private readonly blueprintDBService: BlueprintDBService
+        private readonly blueprintDBService: BlueprintDBService,
     ) {
         super();
         this.logger = loggerFactory.getLogger(handlerName);
@@ -68,7 +68,7 @@ export class AttributeDeleteHandler extends AttributeBaseHandler {
     public async process(
         event: APIGatewayProxyEvent,
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        _context: Context
+        _context: Context,
     ): Promise<BasicHttpResponse> {
         const id = await this.getEntityId(event);
         this.logger.info(`${handlerName} Delete Entity id:${id}`);
@@ -97,7 +97,7 @@ export class AttributeDeleteHandler extends AttributeBaseHandler {
         do {
             const { results, nextToken } = await this.blueprintDBService.listBlueprints(
                 100,
-                nextTokenValue
+                nextTokenValue,
             );
             patternsList = patternsList.concat(results);
             nextTokenValue = nextToken;
@@ -107,14 +107,14 @@ export class AttributeDeleteHandler extends AttributeBaseHandler {
             (pattern) =>
                 pattern.attributes &&
                 Object.entries(pattern.attributes).find(
-                    ([key, value]) => key === item.key && value === item.value
-                )
+                    ([key, value]) => key === item.key && value === item.value,
+                ),
         );
         if (patternAlreadyAssociated) {
             // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw new BasicHttpError(
                 400,
-                `Specified attribute is in use and can not be deleted. id: ${id}`
+                `Specified attribute is in use and can not be deleted. id: ${id}`,
             );
         }
         return id;

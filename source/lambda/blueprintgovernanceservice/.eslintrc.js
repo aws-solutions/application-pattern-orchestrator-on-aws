@@ -18,7 +18,7 @@ module.exports = {
         tsconfigRootDir: __dirname,
         project: ['./tsconfig.json'],
     },
-    plugins: ['@typescript-eslint', 'header'],
+    plugins: ['@typescript-eslint', 'header', 'import'],
     rules: {
         'header/header': [2, path.join(__dirname, 'LicenseHeader.txt')],
 
@@ -35,7 +35,7 @@ module.exports = {
             { selector: 'typeLike', format: ['PascalCase'] },
         ],
         '@typescript-eslint/no-confusing-void-expression': ['error'],
-        '@typescript-eslint/no-duplicate-imports': ['error'],
+        'import/no-duplicates': ['error'],
         '@typescript-eslint/no-empty-interface': ['warn'],
         '@typescript-eslint/no-inferrable-types': ['warn'],
         '@typescript-eslint/no-invalid-void-type': ['error'],

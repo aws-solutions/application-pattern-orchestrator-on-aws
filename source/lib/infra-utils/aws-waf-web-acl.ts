@@ -96,7 +96,7 @@ export class AWSWafWebACL extends Construct {
         if (props.customBodySize) {
             //Add SizeRestrictions_BODY in to set
             const excludedManagedRules = new Set(props.excludedManagedRules).add(
-                'SizeRestrictions_BODY'
+                'SizeRestrictions_BODY',
             );
             // convert set to array
             props.excludedManagedRules = [...excludedManagedRules];

@@ -31,7 +31,7 @@ export class BasicHttpResponse implements APIGatewayProxyResult {
     public constructor(
         public statusCode: number,
         public body: string = '',
-        public headers?: Record<string, boolean | number | string>
+        public headers?: Record<string, boolean | number | string>,
     ) {
         this.body = body;
         this.statusCode = statusCode;
@@ -39,7 +39,7 @@ export class BasicHttpResponse implements APIGatewayProxyResult {
     }
 
     public addHeaders(
-        headers: Record<string, boolean | number | string>
+        headers: Record<string, boolean | number | string>,
     ): BasicHttpResponse {
         this.headers = Object.assign(this.headers || {}, headers);
         return this;
@@ -52,18 +52,18 @@ export class BasicHttpResponse implements APIGatewayProxyResult {
                 error: error.message,
                 retryable: error.retryable,
             }),
-            jsonContentTypeHeader
+            jsonContentTypeHeader,
         );
     }
 
     public static ofRecord(
         statusCode: number,
-        data: Record<string, unknown>
+        data: Record<string, unknown>,
     ): BasicHttpResponse {
         return new BasicHttpResponse(
             statusCode,
             JSON.stringify(data),
-            jsonContentTypeHeader
+            jsonContentTypeHeader,
         );
     }
 
@@ -75,7 +75,7 @@ export class BasicHttpResponse implements APIGatewayProxyResult {
         return new BasicHttpResponse(
             statusCode,
             JSON.stringify(value),
-            jsonContentTypeHeader
+            jsonContentTypeHeader,
         );
     }
 }
@@ -86,7 +86,7 @@ export class BasicHttpError implements Error {
     public constructor(
         public statusCode: number,
         public message: string = '',
-        public retryable: boolean = false
+        public retryable: boolean = false,
     ) {
         this.statusCode = statusCode;
         this.message = message;

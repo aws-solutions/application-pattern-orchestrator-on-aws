@@ -76,7 +76,7 @@ export class InitialiseBlueprintPipelineHandler
         @inject('BlueprintDBService')
         private readonly blueprintDBService: BlueprintDBService,
         @inject('BlueprintPipelineBuilderService')
-        private readonly blueprintPipelineBuilderService: BlueprintPipelineBuilderService
+        private readonly blueprintPipelineBuilderService: BlueprintPipelineBuilderService,
     ) {
         this.logger = loggerFactory.getLogger('InitialiseBlueprintPipelineHandler');
     }
@@ -91,7 +91,7 @@ export class InitialiseBlueprintPipelineHandler
         event: APIGatewayProxyEvent,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        _context: Context
+        _context: Context,
     ): Promise<ServerlessResponse> {
         this.logger.debug("Initialise Pattern's Pipeline request");
 
@@ -107,14 +107,14 @@ export class InitialiseBlueprintPipelineHandler
 
             try {
                 await this.blueprintPipelineBuilderService.invokeCodeBuildProject(
-                    pattern
+                    pattern,
                 );
             } catch (e) {
                 pattern.infrastructureStackStatus = StackStatus.CREATE_FAILED;
 
                 await this.blueprintDBService.updateStatusBlueprintById(
                     pattern.patternId,
-                    pattern.infrastructureStackStatus
+                    pattern.infrastructureStackStatus,
                 );
 
                 return ServerlessResponse.ofObject(500, {
@@ -128,7 +128,7 @@ export class InitialiseBlueprintPipelineHandler
 
             await this.blueprintDBService.updateStatusBlueprintById(
                 pattern.patternId,
-                pattern.infrastructureStackStatus
+                pattern.infrastructureStackStatus,
             );
             return ServerlessResponse.ofObject(201, pattern);
         }

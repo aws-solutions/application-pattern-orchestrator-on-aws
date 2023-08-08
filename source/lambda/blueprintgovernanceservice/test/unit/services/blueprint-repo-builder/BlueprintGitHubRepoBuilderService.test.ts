@@ -151,10 +151,10 @@ describe('test BlueprintGitHubRepoBuilderService', () => {
         mockRequestFunc.mockRejectedValueOnce('test err in creating repo');
         const objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
-            dependencyConfigurationProvider
+            dependencyConfigurationProvider,
         );
         await expect(
-            objectUnderTest.createAndInitializeRepo('repo', 'CFN')
+            objectUnderTest.createAndInitializeRepo('repo', 'CFN'),
         ).rejects.toEqual(new BlueprintError(`Error in creating a repo`, 500));
     });
 
@@ -162,21 +162,21 @@ describe('test BlueprintGitHubRepoBuilderService', () => {
         process.env.GITHUB_URL = 'http://testurl/';
         let objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
-            dependencyConfigurationProvider
+            dependencyConfigurationProvider,
         );
         expect(objectUnderTest.apiBaseUrl).toBe('http://testurl/api/v3');
 
         process.env.GITHUB_URL = 'http://testgithuburl\\';
         objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
-            dependencyConfigurationProvider
+            dependencyConfigurationProvider,
         );
         expect(objectUnderTest.apiBaseUrl).toBe('http://testgithuburl/api/v3');
 
         process.env.GITHUB_URL = 'http://testgithuburl';
         objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
-            dependencyConfigurationProvider
+            dependencyConfigurationProvider,
         );
         expect(objectUnderTest.apiBaseUrl).toBe('http://testgithuburl/api/v3');
     });
@@ -184,7 +184,7 @@ describe('test BlueprintGitHubRepoBuilderService', () => {
     test('test createRepo', async () => {
         const objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
-            dependencyConfigurationProvider
+            dependencyConfigurationProvider,
         );
         mockRequestFunc.mockResolvedValue(githubResponseStub);
         await objectUnderTest.createRepo(repo.name);
@@ -196,19 +196,19 @@ describe('test BlueprintGitHubRepoBuilderService', () => {
                 private: true,
                 is_template: true,
                 auto_init: true,
-            }
+            },
         );
     });
 
     test('test createGitTreeArray', async () => {
         const objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
-            dependencyConfigurationProvider
+            dependencyConfigurationProvider,
         );
         when(mockRequestFunc)
             .calledWith(
                 `POST /repos/${repo.organization}/${repo.name}/git/blobs`,
-                expect.anything()
+                expect.anything(),
             )
             .mockResolvedValue({
                 data: {
@@ -220,9 +220,9 @@ describe('test BlueprintGitHubRepoBuilderService', () => {
             repo.name,
             path.resolve(
                 __dirname,
-                `../../../../${ROOT_INITIAL_REPO_DIR}/${'cdk'.toLowerCase()}`
+                `../../../../${ROOT_INITIAL_REPO_DIR}/${'cdk'.toLowerCase()}`,
             ),
-            branch
+            branch,
         );
         expect(gitTreeArray).toEqual(
             expect.arrayContaining(
@@ -232,21 +232,21 @@ describe('test BlueprintGitHubRepoBuilderService', () => {
                         path: expect.stringContaining(p.path),
                         type: p.type,
                         sha: p.sha,
-                    })
-                )
-            )
+                    }),
+                ),
+            ),
         );
     });
 
     test('test getGitTree', async () => {
         const objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
-            dependencyConfigurationProvider
+            dependencyConfigurationProvider,
         );
         when(mockRequestFunc)
             .calledWith(
                 `POST /repos/${repo.organization}/${repo.name}/git/blobs`,
-                expect.anything()
+                expect.anything(),
             )
             .mockResolvedValue({
                 data: {
@@ -258,10 +258,10 @@ describe('test BlueprintGitHubRepoBuilderService', () => {
             repo.name,
             path.resolve(
                 __dirname,
-                `../../../../${ROOT_INITIAL_REPO_DIR}/${'cdk'.toLowerCase()}`
+                `../../../../${ROOT_INITIAL_REPO_DIR}/${'cdk'.toLowerCase()}`,
             ),
             'latest-sha-test',
-            branch
+            branch,
         );
         expect(mockRequestFunc).toHaveBeenLastCalledWith(
             `POST /repos/${repo.organization}/${repo.name}/git/trees`,
@@ -270,14 +270,14 @@ describe('test BlueprintGitHubRepoBuilderService', () => {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
                 base_tree: 'latest-sha-test',
                 tree: expect.anything(),
-            }
+            },
         );
     });
 
     test('test initialiseRepo', async () => {
         const objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
-            dependencyConfigurationProvider
+            dependencyConfigurationProvider,
         );
         when(mockRequestFunc)
             .calledWith(`GET /repos/${repo.organization}/${repo.name}/branches/${branch}`)
@@ -291,7 +291,7 @@ describe('test BlueprintGitHubRepoBuilderService', () => {
         when(mockRequestFunc)
             .calledWith(
                 `POST /repos/${repo.organization}/${repo.name}/git/commits`,
-                expect.anything()
+                expect.anything(),
             )
             .mockResolvedValue({
                 data: {
@@ -310,7 +310,7 @@ describe('test BlueprintGitHubRepoBuilderService', () => {
                 accept: 'application/vnd.github.v3+json',
                 ref: `refs/heads/${branch}`,
                 sha: 'sha-abc',
-            }
+            },
         );
     });
 
@@ -318,7 +318,7 @@ describe('test BlueprintGitHubRepoBuilderService', () => {
         process.env.GITHUB_ORGANIZATION = repo.owner;
         const objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
-            dependencyConfigurationProvider
+            dependencyConfigurationProvider,
         );
         await objectUnderTest.enableBranchProtection(repo.name, branch);
         expect(mockRequestFunc).toBeCalledWith(
@@ -333,7 +333,7 @@ describe('test BlueprintGitHubRepoBuilderService', () => {
                 },
                 required_status_checks: null,
                 restrictions: null,
-            }
+            },
         );
     });
 
@@ -341,7 +341,7 @@ describe('test BlueprintGitHubRepoBuilderService', () => {
         process.env.GITHUB_ORGANIZATION = repo.owner;
         const objectUnderTest = new BlueprintGitHubRepoBuilderService(
             new StaticLoggerFactory(),
-            dependencyConfigurationProvider
+            dependencyConfigurationProvider,
         );
         await objectUnderTest.addCodeowners(repo.name, ['testuser1']);
         expect(mockRequestFunc).toBeCalledWith(
@@ -350,7 +350,7 @@ describe('test BlueprintGitHubRepoBuilderService', () => {
                 accept: 'application/vnd.github.v3+json',
                 message: 'Add CODEOWNERS',
                 content: Buffer.from('* testuser1').toString('base64'),
-            }
+            },
         );
     });
 });

@@ -32,14 +32,14 @@ describe('Test AppConfiguration.test', () => {
         process.env.githubTokenSecretId = 'githubTokenSecretId';
         const objectUnderTest = new AppConfiguration('test-app');
         expect(
-            objectUnderTest.getDepdencyFor('BLUEPRINTGOVERNANCE')?.githubTokenSecretId
+            objectUnderTest.getDepdencyFor('BLUEPRINTGOVERNANCE')?.githubTokenSecretId,
         ).toEqual('githubTokenSecretId');
     });
 
     test('no default key when configuration missing', () => {
         const objectUnderTest = new AppConfiguration('test-app');
         expect(objectUnderTest.getDepdencyFor('BLUEPRINTGOVERNANCE')?.name).toEqual(
-            'BLUEPRINTGOVERNANCE'
+            'BLUEPRINTGOVERNANCE',
         );
     });
 
@@ -47,7 +47,7 @@ describe('Test AppConfiguration.test', () => {
         process.env.ATTESTATION_ENDPOINT_KEY = undefined;
         const objectUnderTest = new AppConfiguration('test-app');
         expect(
-            objectUnderTest.getDepdencyFor('BLUEPRINTGOVERNANCE')?.githubTokenSecretId
+            objectUnderTest.getDepdencyFor('BLUEPRINTGOVERNANCE')?.githubTokenSecretId,
         ).toBeUndefined();
     });
 });

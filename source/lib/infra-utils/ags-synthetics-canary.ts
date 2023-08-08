@@ -167,11 +167,11 @@ export class AWSSyntheticsCanary extends Construct {
             assumedBy: new iam.ServicePrincipal('lambda'),
             managedPolicies: [
                 iam.ManagedPolicy.fromAwsManagedPolicyName(
-                    'service-role/AWSLambdaBasicExecutionRole'
+                    'service-role/AWSLambdaBasicExecutionRole',
                 ),
                 // must to have this one for lambda to run in VPC
                 iam.ManagedPolicy.fromAwsManagedPolicyName(
-                    'service-role/AWSLambdaVPCAccessExecutionRole'
+                    'service-role/AWSLambdaVPCAccessExecutionRole',
                 ),
             ],
             inlinePolicies: {
@@ -216,14 +216,14 @@ export class AWSSyntheticsCanary extends Construct {
                         id: 'W5',
                         reason: 'Security group is created by CDK and is egress only',
                     },
-                ]
-            )
+                ],
+            ),
         );
     }
 
     private getCanaryRolePolicyDoc(
         artifactsBucket: s3.IBucket,
-        prefix: string
+        prefix: string,
     ): iam.PolicyDocument {
         const { partition } = Stack.of(this);
         const policy = new iam.PolicyDocument({

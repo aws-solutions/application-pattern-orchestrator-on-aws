@@ -72,7 +72,7 @@ export class AWSSecureBucket extends Construct {
                         'aws:SecureTransport': 'false',
                     },
                 },
-            })
+            }),
         );
 
         addCfnNagSuppression(serverAccessLogBucket as Construct, [
@@ -96,7 +96,7 @@ export class AWSSecureBucket extends Construct {
                         'aws:SecureTransport': 'false',
                     },
                 },
-            })
+            }),
         );
         NagSuppressions.addResourceSuppressions(
             this.bucket,
@@ -106,7 +106,7 @@ export class AWSSecureBucket extends Construct {
                     reason: 'This is false positive. Bucket policy has condition to block Non Https traffic',
                 },
             ],
-            true
+            true,
         );
         NagSuppressions.addResourceSuppressions(
             serverAccessLogBucket,
@@ -116,7 +116,7 @@ export class AWSSecureBucket extends Construct {
                     reason: 'This is false positive. Bucket policy has condition to block Non Https traffic',
                 },
             ],
-            true
+            true,
         );
     }
 }

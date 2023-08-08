@@ -164,7 +164,7 @@ export class AWSLambdaFunction extends Construct {
                     reason: 'The wildcard is used as suffix with specific IAM permissions',
                 },
             ],
-            true
+            true,
         );
     }
 }
