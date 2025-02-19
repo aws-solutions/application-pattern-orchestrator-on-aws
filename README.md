@@ -1,3 +1,7 @@
+## Important: This AWS Solution is no longer available.
+
+**You can find other AWS Solutions in the [AWS Solutions Library](https://aws.amazon.com/solutions/).**
+
 ### Table of contents
 
 - [Application Pattern Orchestrator on AWS](#application-pattern-orchestrator-on-aws)
